@@ -1,0 +1,149 @@
+/* Reset margins and base layout */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Color Variables for Dark (Default) and Light Modes */
+:root {
+  --bg-color: #111615;
+  --panel-bg: linear-gradient(125deg, rgba(216, 91, 63, 0.12), transparent 32%), radial-gradient(rgba(98, 184, 172, 0.12) 1px, transparent 1px);
+  --text-color: #f3eee4;
+  --subtext-color: #a6aaa3;
+  --accent-color: #00bcd4;
+  --btn-bg: #00bcd4;
+  --btn-text: #121212;
+  --btn-hover: #26c6da;
+  --toggle-bg: rgba(26, 33, 31, 0.9);
+  --toggle-border: rgba(216, 208, 193, 0.9);
+  --toggle-text: #f3eee4;
+}
+
+body.dark-mode {
+  --bg-color: #111615;
+  --panel-bg: linear-gradient(125deg, rgba(216, 91, 63, 0.12), transparent 32%), radial-gradient(rgba(98, 184, 172, 0.12) 1px, transparent 1px);
+  --text-color: #f3eee4;
+  --subtext-color: #a6aaa3;
+  --accent-color: #00bcd4;
+  --btn-bg: #00bcd4;
+  --btn-text: #121212;
+  --btn-hover: #26c6da;
+  --toggle-bg: rgba(26, 33, 31, 0.9);
+  --toggle-border: rgba(216, 208, 193, 0.9);
+  --toggle-text: #f3eee4;
+}
+
+body.light-mode {
+  --bg-color: #f5f1e8;
+  --panel-bg: linear-gradient(125deg, rgba(216, 91, 63, 0.08), transparent 32%), radial-gradient(rgba(98, 184, 172, 0.14) 1px, transparent 1px);
+  --text-color: #18232c;
+  --subtext-color: #64747b;
+  --accent-color: #008ba3;
+  --btn-bg: #008ba3;
+  --btn-text: #ffffff;
+  --btn-hover: #007387;
+  --toggle-bg: rgba(255, 253, 248, 0.82);
+  --toggle-border: #d8d0c1;
+  --toggle-text: #18232c;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--bg-color);
+  background-image: var(--panel-bg);
+  background-size: auto, 18px 18px;
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Top-Left Mode Toggle Button */
+.theme-btn {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 100;
+  background-color: var(--toggle-bg);
+  color: var(--toggle-text);
+  border: 1px solid var(--toggle-border);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.theme-btn:hover {
+  transform: translateY(-2px);
+}
+
+/* Main Panel covering 100% of the screen */
+.main-panel {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel-bg);
+  background-size: auto, 18px 18px;
+  text-align: center;
+  padding: 20px;
+  transition: background 0.3s ease;
+}
+
+/* Content Container */
+.content-box {
+  max-width: 600px;
+  width: 100%;
+}
+
+.main-panel h1 {
+  font-size: 2.5rem;
+  color: var(--accent-color);
+  margin-bottom: 12px;
+  transition: color 0.3s ease;
+}
+
+.main-panel p {
+  color: var(--subtext-color);
+  font-size: 1.1rem;
+  margin-bottom: 30px;
+  transition: color 0.3s ease;
+}
+
+/* Button Group */
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+/* Navigation Buttons */
+.menu-btn {
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+  border: none;
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 188, 212, 0.2);
+}
+
+.menu-btn:hover {
+  background-color: var(--btn-hover);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(0, 188, 212, 0.4);
+}
+
+.menu-btn:active {
+  transform: translateY(0);
+}

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orbital Atlas</title>
+  <style>
+    :root { --ink:#f3eee4; --muted:#a6aaa3; --paper:#111615; --panel:rgba(26,33,31,.9); --line:#3c4943; --accent:#e4775d; --accent-dark:#bd513c; --teal:#62b8ac; --yellow:#e7bd5c; --shadow:0 22px 60px rgba(0,0,0,.28); }
+    body.light { --ink:#18232c; --muted:#64747b; --paper:#f5f1e8; --panel:rgba(255,253,248,.82); --line:#d8d0c1; --accent:#d85b3f; --accent-dark:#a43f2d; --teal:#277d77; --yellow:#f2c866; --shadow:0 22px 60px rgba(54,45,28,.12); background-color:#f5f1e8; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; color:var(--ink); background-color:var(--paper); font-family:Georgia,'Times New Roman',serif; background-image:linear-gradient(125deg,rgba(216,91,63,.1),transparent 32%),radial-gradient(rgba(98,184,172,.1) 1px,transparent 1px); background-size:auto,18px 18px; transition:color .25s ease; }
+    .page { width:min(1120px,calc(100% - 32px)); margin:0 auto; padding:54px 0 70px; }
+    header { position:relative; display:flex; justify-content:space-between; align-items:end; gap:30px; margin-bottom:34px; }
+    .eyebrow { color:var(--accent); font:700 12px/1.2 Arial,sans-serif; letter-spacing:.18em; text-transform:uppercase; }
+    h1 { margin:8px 0 0; font-size:clamp(42px,7vw,78px); line-height:.88; letter-spacing:-.055em; font-weight:700; }
+    .intro { max-width:340px; margin:0 120px 0 0; color:var(--muted); font:15px/1.55 Arial,sans-serif; }
+    .theme-toggle { position:absolute; top:0; right:0; min-height:38px; padding:0 15px; border:1px solid var(--line); background:var(--panel); color:var(--ink); font-size:11px; letter-spacing:.08em; }
+    .theme-toggle:hover { background:var(--line); }
+    .search-panel { background:var(--panel); border:1px solid rgba(216,208,193,.9); box-shadow:var(--shadow); padding:24px; }
+    .search-label { display:block; margin-bottom:10px; color:var(--muted); font:700 11px/1.2 Arial,sans-serif; letter-spacing:.14em; text-transform:uppercase; }
+    .search-row { display:flex; gap:10px; }
+    input { flex:1; min-width:0; border:1px solid var(--line); border-radius:2px; background:#18201e; color:var(--ink); padding:15px 16px; font:20px Georgia,serif; outline:none; }
+    body.light input { background:#fffdf8; }
+    input:focus { border-color:var(--teal); box-shadow:0 0 0 3px rgba(39,125,119,.12); }
+    button { border:0; border-radius:2px; background:var(--accent); color:white; padding:0 27px; font:700 12px Arial,sans-serif; letter-spacing:.12em; text-transform:uppercase; cursor:pointer; }
+    button:hover { background:var(--accent-dark); }
+    .hint { margin:12px 0 0; color:var(--muted); font:12px Arial,sans-serif; }
+    .result { margin-top:22px; }
+    .element-heading { display:flex; align-items:center; gap:18px; padding:22px 0 20px; border-bottom:1px solid var(--line); }
+    .symbol { display:flex; flex-direction:column; align-items:center; justify-content:center; width:78px; height:78px; border:1px solid rgba(0,0,0,.05); border-radius:4px; color:#18232c; font-family:system-ui,-apple-system,sans-serif; box-shadow:0 4px 8px rgba(0,0,0,.18); }
+    .symbol .num { font-size:12px; line-height:1; opacity:.8; }
+    .symbol .sym { margin-top:4px; font-size:28px; line-height:1; font-weight:700; }
+    .element-heading h2 { margin:0 0 5px; font-size:31px; }
+    .meta { color:var(--muted); font:13px Arial,sans-serif; }
+    .config { margin:20px 0 24px; padding:17px 18px; border-left:4px solid var(--yellow); background:rgba(242,200,102,.16); font-size:clamp(20px,3vw,28px); word-spacing:7px; }
+    .config.core-config { margin-top:-12px; padding-top:0; border-left:0; background:transparent; color:var(--muted); font:700 13px/1.5 Arial,sans-serif; word-spacing:4px; }
+    .orbitals { display:grid; gap:12px; }
+    .orbital-row { display:grid; grid-template-columns:76px 1fr; align-items:center; gap:14px; }
+    .orbital-name { color:var(--muted); font:700 16px Arial,sans-serif; }
+    .boxes { display:flex; gap:8px; flex-wrap:wrap; }
+    .box { display:flex; justify-content:center; align-items:center; gap:5px; width:62px; height:62px; border:1px solid var(--line); background:rgba(26,33,31,.9); }
+    body.light .box { background:rgba(255,253,248,.9); }
+    .electron { display:inline-block; color:var(--accent); font:700 25px Georgia,serif; line-height:1; }
+    .electron.down { color:var(--teal); transform:translateY(5px); }
+    .empty-state { padding:58px 20px; text-align:center; color:var(--muted); background:rgba(255,253,248,.46); font-size:18px; }
+    .three-d-section { margin-top:34px; padding:24px; background:var(--panel); border:1px solid var(--line); box-shadow:var(--shadow); }
+    .three-d-heading { display:flex; justify-content:space-between; align-items:end; gap:16px; margin-bottom:8px; }
+    .three-d-heading h2 { margin:0; font-size:clamp(24px,4vw,36px); }
+    .three-d-heading p { margin:0; color:var(--muted); font:12px/1.45 Arial,sans-serif; text-align:right; }
+    #orbital-3d-viewer { position:relative; width:100%; height:min(62vw,520px); min-height:320px; margin-top:18px; overflow:hidden; border:1px solid var(--line); background:#0b1110; }
+    #orbital-3d-canvas { display:block; width:100%; height:100%; }
+    .three-d-label { position:absolute; top:14px; left:16px; color:#d8eee8; font:700 11px Arial,sans-serif; letter-spacing:.12em; text-transform:uppercase; pointer-events:none; }
+    .three-d-legend { display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:14px; color:var(--muted); font:12px Arial,sans-serif; }
+    .three-d-legend span::before { content:''; display:inline-block; width:9px; height:9px; margin-right:5px; border-radius:50%; background:var(--legend-color); }
+    .error { margin-top:14px; color:var(--accent-dark); font:13px Arial,sans-serif; }
+    footer { margin-top:38px; color:var(--muted); font:11px/1.5 Arial,sans-serif; }
+    .back-to-top { position:fixed; right:18px; bottom:18px; z-index:20; width:42px; height:42px; border:1px solid var(--line); border-radius:50%; background:var(--panel); color:var(--ink); box-shadow:var(--shadow); font:700 22px/1 Georgia,serif; cursor:pointer; }
+    .back-to-top:hover { background:var(--line); }
+    @media (max-width:650px) { .page { width:min(100% - 22px,1120px); padding-top:30px; } header { display:block; } .intro { margin-top:18px; } .search-panel { padding:16px; } .search-row { flex-direction:column; } button { min-height:48px; } .orbital-row { grid-template-columns:52px 1fr; gap:8px; } .box { width:52px; height:52px; } .three-d-section { padding:16px; } .three-d-heading { display:block; } .three-d-heading p { margin-top:8px; text-align:left; } #orbital-3d-viewer { min-height:280px; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header><div><div class="eyebrow">Quantum reference / 01</div><h1>Orbital<br>Atlas</h1></div><p class="intro">Choose an element to see how its electrons occupy the shells and subshells around the nucleus.</p><button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to light mode">Light mode</button></header>
+    <section class="search-panel" aria-label="Element selector">
+      <label class="search-label" for="element-input">Find an element</label>
+      <div class="search-row"><input id="element-input" list="elements" autocomplete="off" placeholder="Try carbon or C" aria-describedby="search-hint"><datalist id="elements"></datalist><button id="enter-button" type="button">Enter</button></div>
+      <p class="hint" id="search-hint">Use an element name or symbol, then press Enter.</p><p class="error" id="error" role="alert" hidden></p>
+    </section>
+    <section class="result" aria-live="polite"><div id="empty-state" class="empty-state">Your selected element's orbital structure will appear here.</div><div id="element-view" hidden><div class="element-heading"><div class="symbol" id="symbol"></div><div><h2 id="element-name"></h2><div class="meta" id="element-meta"></div></div></div><div class="config" id="configuration"></div><div class="config core-config" id="core-configuration"></div><div class="orbitals" id="orbital-diagram"></div></div></section>
+    <section class="three-d-section" aria-labelledby="three-d-title"><div class="three-d-heading"><h2 id="three-d-title">3D orbital structure</h2><p id="three-d-subtitle">Select an element above to build its model.</p></div><div id="orbital-3d-viewer"><canvas id="orbital-3d-canvas"></canvas><div class="three-d-label">Interactive WebGL model</div></div><div class="three-d-legend"><span style="--legend-color:#65c8ba">s orbital</span><span style="--legend-color:#e4775d">p orbital</span><span style="--legend-color:#e7bd5c">d orbital</span><span style="--legend-color:#b888dc">f orbital</span></div></section>
+    <footer>Orbital diagrams use the Aufbau filling order and Hund's rule. Arrows represent electron spin.<br><br>Created by Niloy Kumbhakar; credits to VS Code Copilot for helping me write the code!</footer>
+  </main>
+  <button class="back-to-top" type="button" title="Back to top" aria-label="Back to top">^</button>
+  <script>
+    const elements=[['Hydrogen','H'],['Helium','He'],['Lithium','Li'],['Beryllium','Be'],['Boron','B'],['Carbon','C'],['Nitrogen','N'],['Oxygen','O'],['Fluorine','F'],['Neon','Ne'],['Sodium','Na'],['Magnesium','Mg'],['Aluminium','Al'],['Silicon','Si'],['Phosphorus','P'],['Sulfur','S'],['Chlorine','Cl'],['Argon','Ar'],['Potassium','K'],['Calcium','Ca'],['Scandium','Sc'],['Titanium','Ti'],['Vanadium','V'],['Chromium','Cr'],['Manganese','Mn'],['Iron','Fe'],['Cobalt','Co'],['Nickel','Ni'],['Copper','Cu'],['Zinc','Zn'],['Gallium','Ga'],['Germanium','Ge'],['Arsenic','As'],['Selenium','Se'],['Bromine','Br'],['Krypton','Kr'],['Rubidium','Rb'],['Strontium','Sr'],['Yttrium','Y'],['Zirconium','Zr'],['Niobium','Nb'],['Molybdenum','Mo'],['Technetium','Tc'],['Ruthenium','Ru'],['Rhodium','Rh'],['Palladium','Pd'],['Silver','Ag'],['Cadmium','Cd'],['Indium','In'],['Tin','Sn'],['Antimony','Sb'],['Tellurium','Te'],['Iodine','I'],['Xenon','Xe'],['Caesium','Cs'],['Barium','Ba'],['Lanthanum','La'],['Cerium','Ce'],['Praseodymium','Pr'],['Neodymium','Nd'],['Promethium','Pm'],['Samarium','Sm'],['Europium','Eu'],['Gadolinium','Gd'],['Terbium','Tb'],['Dysprosium','Dy'],['Holmium','Ho'],['Erbium','Er'],['Thulium','Tm'],['Ytterbium','Yb'],['Lutetium','Lu'],['Hafnium','Hf'],['Tantalum','Ta'],['Tungsten','W'],['Rhenium','Re'],['Osmium','Os'],['Iridium','Ir'],['Platinum','Pt'],['Gold','Au'],['Mercury','Hg'],['Thallium','Tl'],['Lead','Pb'],['Bismuth','Bi'],['Polonium','Po'],['Astatine','At'],['Radon','Rn'],['Francium','Fr'],['Radium','Ra'],['Actinium','Ac'],['Thorium','Th'],['Protactinium','Pa'],['Uranium','U'],['Neptunium','Np'],['Plutonium','Pu'],['Americium','Am'],['Curium','Cm'],['Berkelium','Bk'],['Californium','Cf'],['Einsteinium','Es'],['Fermium','Fm'],['Mendelevium','Md'],['Nobelium','No'],['Lawrencium','Lr'],['Rutherfordium','Rf'],['Dubnium','Db'],['Seaborgium','Sg'],['Bohrium','Bh'],['Hassium','Hs'],['Meitnerium','Mt'],['Darmstadtium','Ds'],['Roentgenium','Rg'],['Copernicium','Cn'],['Nihonium','Nh'],['Flerovium','Fl'],['Moscovium','Mc'],['Livermorium','Lv'],['Tennessine','Ts'],['Oganesson','Og']];
+    const order=[['1s',2],['2s',2],['2p',6],['3s',2],['3p',6],['4s',2],['3d',10],['4p',6],['5s',2],['4d',10],['5p',6],['6s',2],['4f',14],['5d',10],['6p',6],['7s',2],['5f',14],['6d',10],['7p',6]];
+    const exceptions={24:[['4s',1],['3d',5]],29:[['4s',1],['3d',10]],41:[['5s',1],['4d',4]],42:[['5s',1],['4d',5]],44:[['5s',1],['4d',7]],45:[['5s',1],['4d',8]],46:[['5s',0],['4d',10]],47:[['5s',1],['4d',10]],57:[['6s',2],['4f',0],['5d',1]],58:[['6s',2],['4f',1],['5d',1]],64:[['6s',2],['4f',7],['5d',1]],78:[['6s',1],['4f',14],['5d',9]],79:[['6s',1],['4f',14],['5d',10]],89:[['7s',2],['5f',0],['6d',1]],90:[['7s',2],['5f',0],['6d',2]],91:[['7s',2],['5f',2],['6d',1]],92:[['7s',2],['5f',3],['6d',1]],96:[['7s',2],['5f',7],['6d',1]],103:[['7s',2],['5f',14],['6d',1]]};
+    const superscript=value=>String(value).replace(/[0-9]/g,digit=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[digit]); const input=document.querySelector('#element-input'); const datalist=document.querySelector('#elements');
+    elements.forEach(([name,symbol])=>{ datalist.insertAdjacentHTML('beforeend',`<option value="${name}">${symbol}</option><option value="${symbol}">${name}</option>`); });
+    const categoryStyles={nonmetal:['#e2f0d9','#2e7d32'],noble:['#e1f5fe','#0288d1'],alkali:['#ffe0b2','#e65100'],alkaline:['#fff9c4','#f57f17'],metalloid:['#e0f2f1','#00695c'],halogen:['#f3e5f5','#7b1fa2'],'post-transition':['#d1c4e9','#4527a0'],transition:['#ffcdd2','#c62828'],lanthanide:['#f8bbd0','#ad1457'],actinide:['#e1bee7','#6a1b9a']};
+    function categoryFor(atomicNumber){ const noble=[2,10,18,36,54,86,118], alkali=[3,11,19,37,55,87], alkaline=[4,12,20,38,56,88], halogen=[9,17,35,53,85,117], nonmetal=[1,6,7,8,15,16,34], metalloid=[5,14,32,33,51,52,84]; if(noble.includes(atomicNumber))return'noble'; if(alkali.includes(atomicNumber))return'alkali'; if(alkaline.includes(atomicNumber))return'alkaline'; if(halogen.includes(atomicNumber))return'halogen'; if(nonmetal.includes(atomicNumber))return'nonmetal'; if(metalloid.includes(atomicNumber))return'metalloid'; if(atomicNumber>=57&&atomicNumber<=71)return'lanthanide'; if(atomicNumber>=89&&atomicNumber<=103)return'actinide'; if((atomicNumber>=21&&atomicNumber<=30)||(atomicNumber>=39&&atomicNumber<=48)||(atomicNumber>=72&&atomicNumber<=80)||(atomicNumber>=104&&atomicNumber<=112))return'transition'; return'post-transition'; }
+    function configurationFor(atomicNumber){ const values=[]; let remaining=atomicNumber; order.forEach(([label,capacity])=>{const count=Math.min(remaining,capacity); values.push([label,count,capacity]); remaining-=count;}); (exceptions[atomicNumber]||[]).forEach(([label,count])=>{const item=values.find(value=>value[0]===label); if(item)item[1]=count;}); return values.filter(([,count])=>count>0).sort((a,b)=>order.findIndex(item=>item[0]===a[0])-order.findIndex(item=>item[0]===b[0])); }
+    function coreConfigurationFor(atomicNumber){ const nobleGases=[[2,'He'],[10,'Ne'],[18,'Ar'],[36,'Kr'],[54,'Xe'],[86,'Rn'],[118,'Og']]; const core=nobleGases.filter(([number])=>number<atomicNumber).pop(); if(!core)return''; const remainder=configurationFor(atomicNumber).filter(([label])=>!configurationFor(core[0]).some(([coreLabel])=>coreLabel===label)); return `[${core[1]}]${remainder.length?'  '+remainder.map(([label,count])=>`${label}${superscript(count)}`).join('  '):''}`; }
+    function renderOrbital(label,electronCount){ const type=label.slice(-1); const boxCount=type==='s'?1:type==='p'?3:type==='d'?5:7; let boxes=''; for(let index=0;index<boxCount;index++){const count=(electronCount>index?1:0)+(electronCount>boxCount+index?1:0); boxes+=`<div class="box">${count>0?'<span class="electron">↑</span>':''}${count>1?'<span class="electron down">↓</span>':''}</div>`;} return `<div class="orbital-row"><div class="orbital-name">${label}</div><div class="boxes" aria-label="${electronCount} electrons in ${label}">${boxes}</div></div>`; }
+    function findElement(query){ const clean=query.trim().toLowerCase(); return elements.find(([name,symbol])=>name.toLowerCase()===clean||symbol.toLowerCase()===clean); }
+    function showElement(){ const match=findElement(input.value); const error=document.querySelector('#error'); if(!match){error.textContent='Element not found. Try a name such as oxygen or a symbol such as O.'; error.hidden=false; return;} error.hidden=true; const atomicNumber=elements.indexOf(match)+1; const config=configurationFor(atomicNumber); const symbolTile=document.querySelector('#symbol'); const [background,color]=categoryStyles[categoryFor(atomicNumber)]; document.querySelector('#empty-state').hidden=true; document.querySelector('#element-view').hidden=false; symbolTile.innerHTML=`<span class="num">${atomicNumber}</span><span class="sym">${match[1]}</span>`; symbolTile.style.background=background; symbolTile.style.color=color; document.querySelector('#element-name').textContent=match[0]; document.querySelector('#element-meta').textContent=`Atomic number ${atomicNumber} · ${atomicNumber} electrons`; document.querySelector('#configuration').textContent=config.map(([label,count])=>`${label}${superscript(count)}`).join('  '); document.querySelector('#core-configuration').textContent=coreConfigurationFor(atomicNumber); document.querySelector('#orbital-diagram').innerHTML=config.map(([label,count])=>renderOrbital(label,count)).join(''); window.orbitalSelected={name:match[0],symbol:match[1],atomicNumber,configuration:config}; window.dispatchEvent(new CustomEvent('orbital-selection-changed',{detail:window.orbitalSelected})); }
+    document.querySelector('#enter-button').addEventListener('click',showElement); input.addEventListener('keydown',event=>{if(event.key==='Enter')showElement();});
+    const themeToggle=document.querySelector('#theme-toggle');
+    themeToggle.addEventListener('click',()=>{ const light=document.body.classList.toggle('light'); themeToggle.textContent=light?'Dark mode':'Light mode'; themeToggle.setAttribute('aria-label',`Switch to ${light?'dark':'light'} mode`); });
+    document.querySelector('.back-to-top').addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+  </script>
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js"}}</script>
+  <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js';
+    import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/controls/OrbitControls.js';
+
+    const viewer=document.querySelector('#orbital-3d-viewer'); const canvas=document.querySelector('#orbital-3d-canvas'); const subtitle=document.querySelector('#three-d-subtitle');
+    const scene=new THREE.Scene(); scene.background=new THREE.Color(0x0b1110);
+    const camera=new THREE.PerspectiveCamera(42,1,.1,1000); camera.position.set(0,5.5,11);
+    const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false}); renderer.setPixelRatio(Math.min(window.devicePixelRatio,2)); renderer.setClearColor(0x0b1110,1);
+    const controls=new OrbitControls(camera,canvas); controls.enableDamping=true; controls.autoRotate=true; controls.autoRotateSpeed=.45; controls.enablePan=false;
+    scene.add(new THREE.AmbientLight(0xb9fff3,1.6)); const keyLight=new THREE.PointLight(0xffffff,30,40); keyLight.position.set(4,6,7); scene.add(keyLight);
+    const model=new THREE.Group(); scene.add(model); const colors={s:0x65c8ba,p:0xe4775d,d:0xe7bd5c,f:0xb888dc};
+    const material=(color,opacity=.32)=>new THREE.MeshPhongMaterial({color,transparent:true,opacity,side:THREE.DoubleSide,depthWrite:false,shininess:80});
+    function orbitalLobe(subType,rotation){ const group=new THREE.Group(); group.rotation.set(rotation.x,rotation.y,rotation.z); const color=colors[subType]; if(subType==='s'){ group.add(new THREE.Mesh(new THREE.SphereGeometry(1.2,32,20),material(color,.2))); return group; } const count=subType==='p'?2:subType==='d'?4:6; const radius=subType==='p'?1.25:subType==='d'?1.05:.9; for(let index=0;index<count;index++){ const angle=(index/count)*Math.PI*2; const lobe=new THREE.Mesh(new THREE.SphereGeometry(radius,subType==='f'?16:22,16),material(color,.3)); lobe.scale.set(.62,1.35,.62); lobe.position.set(Math.cos(angle)*radius*.78,Math.sin(angle)*radius*.78,0); lobe.rotation.z=angle; group.add(lobe); } return group; }
+    function addOrbital(label,count,index){ const subType=label.slice(-1); const orbital=orbitalLobe(subType,{x:(index%3)*.6,y:(index%4)*.75,z:(index%2)*.4}); const ringRadius=2.3+index*.32; orbital.scale.setScalar(.72+Math.min(count,14)*.018); orbital.position.set(Math.cos(index*1.9)*ringRadius*.3,Math.sin(index*1.4)*ringRadius*.24,Math.cos(index*.8)*ringRadius*.3); model.add(orbital); const ring=new THREE.Mesh(new THREE.TorusGeometry(ringRadius,.008,8,96),new THREE.MeshBasicMaterial({color:colors[subType],transparent:true,opacity:.25})); ring.rotation.set(index*.35,index*.52,index*.2); model.add(ring); for(let electron=0;electron<count;electron++){ const angle=(electron/count)*Math.PI*2+index; const dot=new THREE.Mesh(new THREE.SphereGeometry(.075,10,8),new THREE.MeshBasicMaterial({color:colors[subType]})); dot.position.set(Math.cos(angle)*ringRadius,Math.sin(angle)*ringRadius,Math.sin(angle*1.7)*.18); ring.add(dot); } }
+    function updateModel(selection){ model.clear(); if(!selection)return; subtitle.textContent=`${selection.name} (${selection.symbol}) · ${selection.atomicNumber} electrons · drag to rotate`; const nucleus=new THREE.Mesh(new THREE.SphereGeometry(.58,32,20),new THREE.MeshStandardMaterial({color:0xf3b65c,emissive:0x6b321b,emissiveIntensity:.65,metalness:.15,roughness:.3})); model.add(nucleus); selection.configuration.forEach(([label,count],index)=>addOrbital(label,count,index)); }
+    function resize(){ const rect=viewer.getBoundingClientRect(); renderer.setSize(rect.width,rect.height,false); camera.aspect=rect.width/rect.height; camera.updateProjectionMatrix(); } new ResizeObserver(resize).observe(viewer); resize();
+    window.addEventListener('orbital-selection-changed',event=>updateModel(event.detail)); if(window.orbitalSelected)updateModel(window.orbitalSelected);
+    function animate(){ requestAnimationFrame(animate); controls.update(); renderer.render(scene,camera); } animate();
+  </script>
+</body>
+</html>

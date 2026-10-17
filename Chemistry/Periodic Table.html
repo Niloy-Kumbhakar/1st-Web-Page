@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Interactive Periodic Table & Animated Bohr Model</title>
+  <style>
+    /* ------------------------------ */
+    /* Theme Variables & Modes        */
+    /* ------------------------------ */
+    
+    /* Default Mode (Light) */
+    :root {
+      --bg-main: #f0f2f5;
+      --bg-panel: #ffffff;
+      --text-main: #202124;
+      --text-muted: #5f6368;
+      --tag-bg: #f1f3f4;
+      --orbit-line: #a0a6b2;
+      --shadow: 0 4px 15px rgba(0,0,0,0.08);
+      --box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    
+    /* Default Mode (Dark) */
+    [data-theme="dark"] {
+      --bg-main: #121212;
+      --bg-panel: #1e1e1e;
+      --text-main: #e8eaed;
+      --text-muted: #9aa0a6;
+      --tag-bg: #2d2f31;
+      --orbit-line: #6e737d;
+      --shadow: 0 4px 15px rgba(0,0,0,0.5);
+      --box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    }
+
+    /* ------------------------------ */
+    /* Base Styles                    */
+    /* ------------------------------ */
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    
+    body { 
+      background: var(--bg-main); 
+      color: var(--text-main); 
+      min-height: 100vh; 
+      width: 100vw; 
+      display: flex; 
+      flex-direction: column;
+      overflow-x: hidden;
+      transition: background 0.4s ease, color 0.4s ease;
+    }
+
+    /* Main App Wrapper (Top Sections) */
+    .app-wrapper {
+      display: flex;
+      flex-direction: row; 
+      width: 100%;
+      height: 100vh;
+      padding: 10px;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .panel {
+      background: var(--bg-panel);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      transition: background 0.4s ease, box-shadow 0.4s ease;
+    }
+
+    /* Left Panel: Bohr Model, Stats & Flashcard */
+    .bohr-panel {
+      flex: 1.25;
+      min-width: 320px;
+      padding: 12px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      overflow-y: auto;
+    }
+
+    /* Theme & Mode Controls Container */
+    .theme-controls {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      display: flex;
+      gap: 6px;
+      z-index: 10;
+    }
+    .theme-btn {
+      background: var(--tag-bg);
+      color: var(--text-main);
+      border: 1px solid var(--orbit-line);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s, transform 0.1s;
+    }
+    .theme-btn:active { transform: scale(0.95); }
+
+    .bohr-content-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      flex-grow: 1;
+      margin-top: 25px;
+    }
+
+    .element-title {
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-align: center;
+      margin-bottom: 6px;
+    }
+
+    .bohr-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      margin: 4px 0;
+    }
+
+    .canvas-container { position: relative; width: 200px; height: 200px; flex-shrink: 0; }
+    canvas { width: 100%; height: 100%; }
+
+    .control-btn {
+      background: var(--tag-bg);
+      color: var(--text-main);
+      border: 1px solid var(--orbit-line);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .control-btn:active { transform: scale(0.95); }
+
+    .shell-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin: 4px 0 10px 0; }
+    .shell-tag { background: var(--tag-bg); border-radius: 8px; padding: 3px 6px; font-size: 10px; font-weight: 600; }
+
+    .stats-box {
+      width: 100%;
+      background: var(--tag-bg);
+      border-radius: 12px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: background 0.3s;
+    }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+
+    .stat-item {
+      background: var(--bg-panel);
+      padding: 4px 2px;
+      border-radius: 6px;
+      text-align: center;
+      box-shadow: var(--box-shadow);
+      display: flex;
+      flex-direction: column;
+      transition: background 0.3s;
+    }
+    .stat-item span { font-size: 9px; color: var(--text-muted); font-weight: 700; margin-bottom: 2px; }
+    .stat-item strong { font-size: 11px; font-weight: 800; }
+
+    .spdf-box {
+      background: var(--bg-panel);
+      padding: 6px;
+      border-radius: 6px;
+      box-shadow: var(--box-shadow);
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: 'Courier New', Courier, monospace;
+      letter-spacing: 0.5px;
+      transition: background 0.3s;
+    }
+
+    /* Element Card Style */
+    .element-card {
+      width: 100%;
+      border-radius: 4px;
+      padding: 12px 15px;
+      margin-top: 15px;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.25);
+      font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+      transition: background-color 0.4s ease, color 0.4s ease;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.4rem;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+    .card-body {
+      text-align: center;
+      font-size: 0.95rem;
+      line-height: 1.3;
+      font-weight: 500;
+    }
+
+    .footer-text {
+      font-family: "Jokerman", cursive, sans-serif;
+      font-size: 12px;
+      margin-top: 15px;
+      width: 100%;
+      text-align: left;
+      color: var(--text-muted);
+    }
+
+    /* Right Panel: Periodic Table & Audio Bar */
+    .pt-panel {
+      flex: 2;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: auto;
+    }
+
+    .legend { 
+      display: flex; 
+      flex-wrap: wrap; 
+      justify-content: center; 
+      gap: 8px 12px; 
+      margin-bottom: 10px; 
+      font-size: 11px; 
+      font-weight: 600; 
+    }
+    .legend-item { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+    .legend-box { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+    /* Grid layout */
+    .pt-grid { 
+      display: grid; 
+      grid-template-columns: 15px repeat(18, minmax(20px, 1fr)); 
+      grid-template-rows: 20px repeat(7, 1fr) 15px repeat(2, 1fr);
+      gap: 3px; 
+      width: 100%; 
+      min-width: 540px;
+    }
+
+    .grid-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end; 
+      font-size: 9px;
+      font-weight: 800;
+      color: var(--text-muted);
+      padding-bottom: 0px; 
+      line-height: 1; 
+    }
+    .row-header {
+      justify-content: center;
+      padding-right: 4px;
+      font-size: 10px;
+    }
+
+    .element-btn { 
+      aspect-ratio: 1 / 1; 
+      border-radius: 4px; 
+      border: 1px solid rgba(0,0,0,0.05); 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: center; 
+      cursor: pointer; 
+      transition: transform 0.1s, filter 0.3s; 
+    }
+    .element-btn:active { transform: scale(0.90); }
+    .element-btn .num { font-size: 0.55em; opacity: 0.8; }
+    .element-btn .sym { font-weight: bold; font-size: 0.8em; }
+    
+    .element-btn.active { outline: 2px solid var(--text-main); outline-offset: -1px; transform: scale(1.15); z-index: 2; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+    [data-theme="dark"] .element-btn { filter: brightness(0.9); }
+    .element-btn.category-highlight { outline: 2px solid currentColor; outline-offset: 1px; filter: brightness(1.2) saturate(1.25); z-index: 3; box-shadow: 0 0 0 2px currentColor, 0 4px 8px rgba(0,0,0,0.3); }
+
+    /* Bottom Container (Search + Audio Widget) */
+    .bottom-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+      min-width: 520px;
+    }
+
+    .search-widget {
+      width: 100%;
+      display: flex;
+      gap: 6px;
+    }
+    .search-widget input {
+      flex: 1;
+      background: var(--tag-bg);
+      color: var(--text-main);
+      border: 1px solid var(--orbit-line);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      outline: none;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .audio-widget {
+      width: 100%;
+      background: var(--tag-bg);
+      border-radius: 10px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: var(--box-shadow);
+      transition: background 0.3s;
+    }
+    .audio-widget select {
+      flex: 1;
+      background: var(--bg-panel);
+      color: var(--text-main);
+      border: 1px solid var(--orbit-line);
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s;
+    }
+    .audio-widget input[type="range"] {
+      width: 70px;
+      accent-color: #1a73e8;
+      cursor: pointer;
+    }
+
+    /* ---------------------------------------------------- */
+    /* BOTTOM PANEL: Atomic Orbitals Showcase               */
+    /* ---------------------------------------------------- */
+    .orbitals-section-wrapper {
+      width: 100%;
+      padding: 10px;
+      flex-shrink: 0;
+    }
+
+    .orbitals-panel {
+      background: var(--bg-panel);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      transition: background 0.4s ease, box-shadow 0.4s ease;
+    }
+
+    .orbitals-header {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 4px;
+      text-align: center;
+    }
+
+    .orbitals-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .orbitals-link {
+      display: inline-block;
+      margin-top: 16px;
+      padding: 10px 16px;
+      border: 1px solid var(--orbit-line);
+      border-radius: 8px;
+      color: var(--text-main);
+      background: var(--tag-bg);
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: background 0.3s, color 0.3s, transform 0.1s;
+    }
+    .orbitals-link:hover { filter: brightness(1.1); }
+    .orbitals-link:active { transform: scale(0.98); }
+
+    .orbitals-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      width: 100%;
+      max-width: 1000px;
+    }
+
+    .orbital-card {
+      background: var(--tag-bg);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: var(--box-shadow);
+      transition: background 0.3s;
+    }
+
+    /* Force orbital cards in dark mode to keep standard dark background regardless of active secondary mode */
+    [data-theme="dark"] .orbital-card {
+      background: #2d2f31 !important;
+    }
+
+    .orbital-title {
+      font-size: 13px;
+      font-weight: 700;
+      font-family: 'Courier New', Courier, monospace;
+      margin-bottom: 8px;
+    }
+
+    .orbital-canvas-box {
+      position: relative;
+      width: 160px;
+      height: 160px;
+    }
+
+    .orbital-canvas-box canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    .back-to-top {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 20;
+      width: 42px;
+      height: 42px;
+      border: 1px solid var(--orbit-line);
+      border-radius: 50%;
+      background: var(--tag-bg);
+      color: var(--text-main);
+      box-shadow: var(--shadow);
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1;
+      cursor: pointer;
+      transition: transform 0.2s, filter 0.2s;
+    }
+    .back-to-top:hover { filter: brightness(1.15); transform: translateY(-3px); }
+
+    @media (orientation: portrait) {
+      .app-wrapper { flex-direction: column; height: auto; }
+      .bohr-panel { flex: unset; height: 50vh; }
+      .pt-panel { flex: unset; height: 50vh; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-wrapper">
+  <!-- Left Panel -->
+  <div class="panel bohr-panel">
+    
+    <!-- Theme & Mode Controls -->
+    <div class="theme-controls">
+      <button id="themeToggle" class="theme-btn">☀️ Light</button>
+    </div>
+    
+    <div class="bohr-content-center">
+      <div id="elementTitle" class="element-title">--</div>
+      
+      <div class="bohr-container">
+        <div class="canvas-container">
+          <canvas id="bohrCanvas" width="300" height="300"></canvas>
+        </div>
+        <button id="playPauseBtn" class="control-btn" title="Play or Pause Animation">⏸ Pause</button>
+      </div>
+      
+      <div class="shell-tags" id="shellTags"></div>
+
+      <div class="stats-box">
+        <div class="stats-grid">
+          <div class="stat-item"><span>Z</span><strong id="detZ">--</strong></div>
+          <div class="stat-item"><span>A</span><strong id="detA">--</strong></div>
+          <div class="stat-item"><span>p⁺</span><strong id="detP">--</strong></div>
+          <div class="stat-item"><span>e⁻</span><strong id="detE">--</strong></div>
+          <div class="stat-item"><span>n⁰</span><strong id="detN">--</strong></div>
+        </div>
+        <div class="spdf-box" id="detConf">--</div>
+      </div>
+
+      <!-- Flashcard Section -->
+      <div class="element-card" id="elementCard">
+        <div class="card-header">
+          <span id="cardSym">--</span>
+          <span id="cardName">--</span>
+          <span id="cardZ">--</span>
+        </div>
+        <div class="card-body" id="cardBody">--</div>
+      </div>
+    </div>
+
+    <div class="footer-text">Created by Niloy Kumbhakar; credits to Gemini and VS Code Copilot for helping me write the code!</div>
+  </div>
+  
+  <!-- Right Panel -->
+  <div class="panel pt-panel">
+    <div>
+      <div class="legend" id="legend"></div>
+      <div class="pt-grid" id="ptGrid"></div>
+    </div>
+
+    <!-- Bottom Actions Container -->
+    <div class="bottom-controls">
+      <div class="search-widget">
+        <input type="search" id="elSearch" list="elList" placeholder="Search by element name or symbol (e.g., Oxygen or O)...">
+        <datalist id="elList"></datalist>
+        <button id="searchEnterBtn" class="control-btn">Search</button>
+      </div>
+      
+      <div class="audio-widget">
+        <button id="musicToggleBtn" class="control-btn">⏸ Pause Sound</button>
+        <select id="musicSelect">
+          <option value="chimes" selected>🎐 Zen Wind Chimes</option>
+          <option value="chords">🎵 Ambient Chords</option>
+          <option value="rain">🌧️ Soft Rain</option>
+          <option value="waves">🌊 Ocean Waves</option>
+          <option value="wind">🍃 Whispering Wind</option>
+          <option value="stream">🏞️ Forest Stream</option>
+          <option value="birds">🐦 Forest Birds</option>
+          <option value="bowls">🥣 Singing Bowls</option>
+          <option value="drone">🌌 Cosmic Drone</option>
+          <option value="breeze">🌾 Meadow Breeze</option>
+        </select>
+        <span style="font-size: 10px; font-weight: bold; color: var(--text-muted);">Vol:</span>
+        <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.3" title="Volume">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scroll-down panel for Atomic Orbitals Showcase -->
+<div class="orbitals-section-wrapper">
+  <div class="orbitals-panel">
+    <div class="orbitals-header" id="orbitalsHeaderTitle">Atomic Orbitals Showcase</div>
+    <div class="orbitals-subtitle" id="orbitalsSubtitle">Animated electron cloud probability distributions for the occupied orbitals of the selected element</div>
+    <div class="orbitals-grid" id="orbitalsGrid">
+      <!-- Dynamically generated orbital cards will appear here -->
+    </div>
+  </div>
+  <a class="orbitals-link" href="Orbitals.html">Open the orbital structure viewer</a></center>
+</div>
+
+<button class="back-to-top" type="button" title="Back to top" aria-label="Back to top">^</button>
+
+<script>
+// Theme & Mode Controls
+const themeBtn = document.getElementById('themeToggle');
+
+document.querySelector('.back-to-top').addEventListener('click', () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+themeBtn.addEventListener('click', () => {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  themeBtn.innerHTML = isDark ? '🌙 Dark' : '☀️ Light';
+});
+
+// Bohr Model Animation Control
+let isPlaying = true;
+const playPauseBtn = document.getElementById('playPauseBtn');
+playPauseBtn.addEventListener('click', () => {
+  isPlaying = !isPlaying;
+  playPauseBtn.innerText = isPlaying ? '⏸ Pause' : '▶ Play';
+});
+
+// Synthesized Nature & Music Engine
+let audioCtx = null;
+let musicPlaying = true; 
+let currentSourceNodes = [];
+let chimeInterval = null;
+let masterGain = null;
+let isAudioInitialized = false;
+
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = parseFloat(document.getElementById('volumeSlider').value);
+    masterGain.connect(audioCtx.destination);
+  }
+}
+
+function stopMusic() {
+  if (chimeInterval) { clearInterval(chimeInterval); chimeInterval = null; }
+  currentSourceNodes.forEach(node => {
+    try { node.stop(); } catch(e){}
+    try { node.disconnect(); } catch(e){}
+  });
+  currentSourceNodes = [];
+  if (audioCtx && audioCtx.state === 'running') {
+    audioCtx.suspend();
+  }
+}
+
+function createNoiseBuffer() {
+  let bufferSize = audioCtx.sampleRate * 3;
+  let buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  let output = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) { output[i] = Math.random() * 2 - 1; }
+  return buffer;
+}
+
+function startMusic() {
+  initAudio();
+  if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+  
+  if (chimeInterval) { clearInterval(chimeInterval); }
+  currentSourceNodes.forEach(n => { try { n.stop(); n.disconnect(); } catch(e){} });
+  currentSourceNodes = [];
+
+  const type = document.getElementById('musicSelect').value;
+
+  if (type === 'chords') {
+    const freqs = [130.81, 164.81, 196.00, 246.94, 293.66, 329.63];
+    freqs.forEach((f, idx) => {
+      let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
+      osc.type = 'triangle'; osc.frequency.value = f;
+      let lfo = audioCtx.createOscillator(); let lfoGain = audioCtx.createGain();
+      lfo.frequency.value = 0.08 + idx * 0.02; lfoGain.gain.value = 0.06;
+      lfo.connect(lfoGain); lfoGain.connect(gain.gain);
+      gain.gain.value = 0.05; osc.connect(gain); gain.connect(masterGain);
+      osc.start(); lfo.start(); currentSourceNodes.push(osc, lfo);
+    });
+  } else if (type === 'rain') {
+    let noise = audioCtx.createBufferSource(); noise.buffer = createNoiseBuffer(); noise.loop = true;
+    let filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 750;
+    noise.connect(filter); filter.connect(masterGain); noise.start(); currentSourceNodes.push(noise);
+  } else if (type === 'waves') {
+    let noise = audioCtx.createBufferSource(); noise.buffer = createNoiseBuffer(); noise.loop = true;
+    let filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass';
+    let lfo = audioCtx.createOscillator(); lfo.frequency.value = 0.1; let lfoGain = audioCtx.createGain(); lfoGain.gain.value = 350;
+    filter.frequency.value = 450; lfo.connect(lfoGain); lfoGain.connect(filter.frequency);
+    noise.connect(filter); filter.connect(masterGain); noise.start(); lfo.start(); currentSourceNodes.push(noise, lfo);
+  } else if (type === 'wind') {
+    let noise = audioCtx.createBufferSource(); noise.buffer = createNoiseBuffer(); noise.loop = true;
+    let filter = audioCtx.createBiquadFilter(); filter.type = 'bandpass'; filter.Q.value = 3.0;
+    let lfo = audioCtx.createOscillator(); lfo.frequency.value = 0.15; let lfoGain = audioCtx.createGain(); lfoGain.gain.value = 250;
+    filter.frequency.value = 400; lfo.connect(lfoGain); lfoGain.connect(filter.frequency);
+    noise.connect(filter); filter.connect(masterGain); noise.start(); lfo.start(); currentSourceNodes.push(noise, lfo);
+  } else if (type === 'stream') {
+    let noise = audioCtx.createBufferSource(); noise.buffer = createNoiseBuffer(); noise.loop = true;
+    let filter = audioCtx.createBiquadFilter(); filter.type = 'bandpass'; filter.Q.value = 1.5;
+    let lfo = audioCtx.createOscillator(); lfo.frequency.value = 2.5; let lfoGain = audioCtx.createGain(); lfoGain.gain.value = 300;
+    filter.frequency.value = 900; lfo.connect(lfoGain); lfoGain.connect(filter.frequency);
+    noise.connect(filter); filter.connect(masterGain); noise.start(); lfo.start(); currentSourceNodes.push(noise, lfo);
+  } else if (type === 'birds') {
+    let noise = audioCtx.createBufferSource(); noise.buffer = createNoiseBuffer(); noise.loop = true;
+    let filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 500;
+    let noiseGain = audioCtx.createGain(); noiseGain.gain.value = 0.3;
+    noise.connect(filter); filter.connect(noiseGain); noiseGain.connect(masterGain);
+    noise.start(); currentSourceNodes.push(noise);
+
+    chimeInterval = setInterval(() => {
+      if (Math.random() > 0.4 && audioCtx.state === 'running') {
+        let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
+        osc.type = 'sine';
+        let startTime = audioCtx.currentTime;
+        let baseFreq = 2200 + Math.random() * 1800;
+        osc.frequency.setValueAtTime(baseFreq, startTime);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq + 1000, startTime + 0.06);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq - 600, startTime + 0.12);
+        
+        gain.gain.setValueAtTime(0.04, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.15);
+        
+        osc.connect(gain); gain.connect(masterGain);
+        osc.start(startTime); osc.stop(startTime + 0.16);
+      }
+    }, 800);
+  } else if (type === 'bowls') {
+    [216, 217.5, 432, 434.2].forEach((f, i) => {
+      let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
+      osc.type = 'sine'; osc.frequency.value = f; gain.gain.value = 0.06 / (i + 1);
+      osc.connect(gain); gain.connect(masterGain); osc.start(); currentSourceNodes.push(osc);
+    });
+  } else if (type === 'chimes') {
+    const scale = [523.25, 659.25, 783.99, 880, 1046.50, 1174.66];
+    chimeInterval = setInterval(() => {
+      if (Math.random() > 0.4 && audioCtx.state === 'running') {
+        let note = scale[Math.floor(Math.random() * scale.length)];
+        let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
+        osc.type = 'sine'; osc.frequency.value = note;
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 3.0);
+        osc.connect(gain); gain.connect(masterGain);
+        osc.start(); osc.stop(audioCtx.currentTime + 3.1);
+      }
+    }, 1200);
+  } else if (type === 'drone') {
+    [108, 216, 324].forEach((f, i) => {
+      let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
+      osc.type = 'sine'; osc.frequency.value = f; gain.gain.value = 0.07 / (i + 1);
+      osc.connect(gain); gain.connect(masterGain); osc.start(); currentSourceNodes.push(osc);
+    });
+  } else if (type === 'breeze') {
+    let noise = audioCtx.createBufferSource(); noise.buffer = createNoiseBuffer(); noise.loop = true;
+    let filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass';
+    let lfo = audioCtx.createOscillator(); lfo.frequency.value = 0.08; let lfoGain = audioCtx.createGain(); lfoGain.gain.value = 200;
+    filter.frequency.value = 350; lfo.connect(lfoGain); lfoGain.connect(filter.frequency);
+    noise.connect(filter); filter.connect(masterGain); noise.start(); lfo.start(); currentSourceNodes.push(noise, lfo);
+  }
+}
+
+function autoPlayOnFirstInteraction() {
+  if (!isAudioInitialized && musicPlaying) {
+    isAudioInitialized = true;
+    startMusic();
+  }
+  document.removeEventListener('click', autoPlayOnFirstInteraction);
+}
+document.addEventListener('click', autoPlayOnFirstInteraction);
+
+const musicBtn = document.getElementById('musicToggleBtn');
+musicBtn.addEventListener('click', () => {
+  musicPlaying = !musicPlaying;
+  isAudioInitialized = true;
+  if (musicPlaying) {
+    startMusic();
+    musicBtn.innerText = '⏸ Pause Sound';
+  } else {
+    stopMusic();
+    musicBtn.innerText = '▶ Play Sound';
+  }
+});
+
+document.getElementById('musicSelect').addEventListener('change', () => {
+  if (musicPlaying && isAudioInitialized) startMusic();
+});
+
+document.getElementById('volumeSlider').addEventListener('input', (e) => {
+  if (masterGain) { masterGain.gain.value = parseFloat(e.target.value); }
+});
+
+// Periodic Table Data
+const categories = {
+  "nonmetal": { name: "Nonmetal", bg: "#e2f0d9", text: "#2e7d32" },
+  "noble": { name: "Noble Gas", bg: "#e1f5fe", text: "#0288d1" },
+  "alkali": { name: "Alkali Metal", bg: "#ffe0b2", text: "#e65100" },
+  "alkaline": { name: "Alkaline Earth", bg: "#fff9c4", text: "#f57f17" },
+  "metalloid": { name: "Metalloid", bg: "#e0f2f1", text: "#00695c" },
+  "halogen": { name: "Halogen", bg: "#f3e5f5", text: "#7b1fa2" },
+  "post-transition": { name: "Post-Transition", bg: "#d1c4e9", text: "#4527a0" },
+  "transition": { name: "Transition Metal", bg: "#ffcdd2", text: "#c62828" },
+  "lanthanide": { name: "Lanthanide", bg: "#f8bbd0", text: "#ad1457" },
+  "actinide": { name: "Actinide", bg: "#e1bee7", text: "#6a1b9a" }
+};
+
+const elementNames = ["Hydrogen","Helium","Lithium","Beryllium","Boron","Carbon","Nitrogen","Oxygen","Fluorine","Neon","Sodium","Magnesium","Aluminum","Silicon","Phosphorus","Sulfur","Chlorine","Argon","Potassium","Calcium","Scandium","Titanium","Vanadium","Chromium","Manganese","Iron","Cobalt","Nickel","Copper","Zinc","Gallium","Germanium","Arsenic","Selenium","Bromine","Krypton","Rubidium","Strontium","Yttrium","Zirconium","Niobium","Molybdenum","Technetium","Ruthenium","Rhodium","Palladium","Silver","Cadmium","Indium","Tin","Antimony","Tellurium","Iodine","Xenon","Cesium","Barium","Lanthanum","Cerium","Praseodymium","Neodymium","Promethium","Samarium","Europium","Gadolinium","Terbium","Dysprosium","Holmium","Erbium","Thulium","Ytterbium","Lutetium","Hafnium","Tantalum","Tungsten","Rhenium","Osmium","Iridium","Platinum","Gold","Mercury","Thallium","Lead","Bismuth","Polonium","Astatine","Radon","Francium","Radium","Actinium","Thorium","Protactinium","Uranium","Neptunium","Plutonium","Americium","Curium","Berkelium","Californium","Einsteinium","Fermium","Mendelevium","Nobelium","Lawrencium","Rutherfordium","Dubnium","Seaborgium","Bohrium","Hassium","Meitnerium","Darmstadtium","Roentgenium","Copernicium","Nihonium","Flerovium","Moscovium","Livermorium","Tennessine","Oganesson"];
+
+const rawData = [
+  [1,"H",1,1,"nonmetal"],[2,"He",1,18,"noble"],
+  [3,"Li",2,1,"alkali"],[4,"Be",2,2,"alkaline"],[5,"B",2,13,"metalloid"],[6,"C",2,14,"nonmetal"],[7,"N",2,15,"nonmetal"],[8,"O",2,16,"nonmetal"],[9,"F",2,17,"halogen"],[10,"Ne",2,18,"noble"],
+  [11,"Na",3,1,"alkali"],[12,"Mg",3,2,"alkaline"],[13,"Al",3,13,"post-transition"],[14,"Si",3,14,"metalloid"],[15,"P",3,15,"nonmetal"],[16,"S",3,16,"nonmetal"],[17,"Cl",3,17,"halogen"],[18,"Ar",3,18,"noble"],
+  [19,"K",4,1,"alkali"],[20,"Ca",4,2,"alkaline"],[21,"Sc",4,3,"transition"],[22,"Ti",4,4,"transition"],[23,"V",4,5,"transition"],[24,"Cr",4,6,"transition"],[25,"Mn",4,7,"transition"],[26,"Fe",4,8,"transition"],[27,"Co",4,9,"transition"],[28,"Ni",4,10,"transition"],[29,"Cu",4,11,"transition"],[30,"Zn",4,12,"transition"],[31,"Ga",4,13,"post-transition"],[32,"Ge",4,14,"metalloid"],[33,"As",4,15,"metalloid"],[34,"Se",4,16,"nonmetal"],[35,"Br",4,17,"halogen"],[36,"Kr",4,18,"noble"],
+  [37,"Rb",5,1,"alkali"],[38,"Sr",5,2,"alkaline"],[39,"Y",5,3,"transition"],[40,"Zr",5,4,"transition"],[41,"Nb",5,5,"transition"],[42,"Mo",5,6,"transition"],[43,"Tc",5,7,"transition"],[44,"Ru",5,8,"transition"],[45,"Rh",5,9,"transition"],[46,"Pd",5,10,"transition"],[47,"Ag",5,11,"transition"],[48,"Cd",5,12,"transition"],[49,"In",5,13,"post-transition"],[50,"Sn",5,14,"post-transition"],[51,"Sb",5,15,"metalloid"],[52,"Te",5,16,"metalloid"],[53,"I",5,17,"halogen"],[54,"Xe",5,18,"noble"],
+  [55,"Cs",6,1,"alkali"],[56,"Ba",6,2,"alkaline"],[57,"La",8,3,"lanthanide"],[58,"Ce",8,4,"lanthanide"],[59,"Pr",8,5,"lanthanide"],[60,"Nd",8,6,"lanthanide"],[61,"Pm",8,7,"lanthanide"],[62,"Sm",8,8,"lanthanide"],[63,"Eu",8,9,"lanthanide"],[64,"Gd",8,10,"lanthanide"],[65,"Tb",8,11,"lanthanide"],[66,"Dy",8,12,"lanthanide"],[67,"Ho",8,13,"lanthanide"],[68,"Er",8,14,"lanthanide"],[69,"Tm",8,15,"lanthanide"],[70,"Yb",8,16,"lanthanide"],[71,"Lu",8,17,"lanthanide"],[72,"Hf",6,4,"transition"],[73,"Ta",6,5,"transition"],[74,"W",6,6,"transition"],[75,"Re",6,7,"transition"],[76,"Os",6,8,"transition"],[77,"Ir",6,9,"transition"],[78,"Pt",6,10,"transition"],[79,"Au",6,11,"transition"],[80,"Hg",6,12,"transition"],[81,"Tl",6,13,"post-transition"],[82,"Pb",6,14,"post-transition"],[83,"Bi",6,15,"post-transition"],[84,"Po",6,16,"post-transition"],[85,"At",6,17,"halogen"],[86,"Rn",6,18,"noble"],
+  [87,"Fr",7,1,"alkali"],[88,"Ra",7,2,"alkaline"],[89,"Ac",9,3,"actinide"],[90,"Th",9,4,"actinide"],[91,"Pa",9,5,"actinide"],[92,"U",9,6,"actinide"],[93,"Np",9,7,"actinide"],[94,"Pu",9,8,"actinide"],[95,"Am",9,9,"actinide"],[96,"Cm",9,10,"actinide"],[97,"Bk",9,11,"actinide"],[98,"Cf",9,12,"actinide"],[99,"Es",9,13,"actinide"],[100,"Fm",9,14,"actinide"],[101,"Md",9,15,"actinide"],[102,"No",9,16,"actinide"],[103,"Lr",9,17,"actinide"],[104,"Rf",7,4,"transition"],[105,"Db",7,5,"transition"],[106,"Sg",7,6,"transition"],[107,"Bh",7,7,"transition"],[108,"Hs",7,8,"transition"],[109,"Mt",7,9,"transition"],[110,"Ds",7,10,"transition"],[111,"Rg",7,11,"transition"],[112,"Cn",7,12,"transition"],[113,"Nh",7,13,"post-transition"],[114,"Fl",7,14,"post-transition"],[115,"Mc",7,15,"post-transition"],[116,"Lv",7,16,"post-transition"],[117,"Ts",7,17,"halogen"],[118,"Og",7,18,"noble"]
+];
+
+const massMap = [0,1,4,7,9,11,12,14,16,19,20,23,24,27,28,31,32,35,40,39,40,45,48,51,52,55,56,59,59,64,65,70,73,75,79,80,84,85,88,89,91,93,96,98,101,103,106,108,112,115,119,122,128,127,131,133,137,139,140,141,144,145,150,152,157,159,163,165,167,169,173,175,178,181,184,186,190,192,195,197,201,204,207,209,209,210,222,223,226,227,232,231,238,237,244,243,247,247,251,252,257,258,259,262,267,268,269,270,277,278,281,282,285,286,289,290,293,294,294];
+
+function getElementFact(el) {
+  const exactCardMap = {
+    1: "colorless gas; lightest element, 75% of universe's mass, stars, water, organic compounds, rocket fuel.",
+    6: "solid; basis of all known life, diamond, graphite, coal, organic molecules.",
+    8: "colorless gas; 21% of air, H₂O, 65% of the body, organic molecules, blood, breathing, fire, half of Earth's crust, minerals, oxides",
+    7: "colorless gas; 78% of air, proteins, DNA, explosives, fertilizers.",
+    11: "solid (soft metal); salt (NaCl), nerve function, baking soda, streetlights.",
+    20: "solid (metal); bones, teeth, milk, chalk, limestone, cement.",
+    26: "solid (magnetic metal); steel, blood (hemoglobin), Earth's core, construction.",
+    79: "solid (yellow metal); jewelry, electronics, currency, extremely non-reactive."
+  };
+  
+  if (exactCardMap[el.z]) return exactCardMap[el.z];
+
+  let state = "solid";
+  const gases = [1,2,7,8,9,10,17,18,36,54,86,118];
+  const liquids = [35, 80];
+  if (gases.includes(el.z)) state = "colorless gas (mostly)";
+  if (liquids.includes(el.z)) state = "liquid at room temp";
+  
+  let desc = `${state}; classified as a ${categories[el.cat].name.toLowerCase()}. `;
+  desc += `Known relative atomic mass is approx ${massMap[el.z] || 'Unknown'}. Found in various chemical compounds based on its valence electron structure.`;
+  return desc;
+}
+
+function toSuperscript(num) {
+  const sup = {'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+  return num.toString().split('').map(d => sup[d]).join('');
+}
+
+function getSPDF(z) {
+  if (z === 1) return "1s¹"; if (z === 2) return "1s²";
+  const order = ["1s","2s","2p","3s","3p","4s","3d","4p","5s","4d","5p","6s","4f","5d","6p","7s","5f","6d","7p"];
+  const caps = [2, 2, 6, 2, 6, 2, 10, 6, 2, 10, 6, 2, 14, 10, 6, 2, 14, 10, 6];
+  const nobles = [{z:118, s:"[Og]"}, {z:86, s:"[Rn]"}, {z:54, s:"[Xe]"}, {z:36, s:"[Kr]"}, {z:18, s:"[Ar]"}, {z:10, s:"[Ne]"}, {z:2, s:"[He]"}];
+  let core = nobles.find(n => n.z < z);
+  let rem = z; let configObj = {};
+  for (let i = 0; i < order.length; i++) {
+    if (rem <= 0) break; let take = Math.min(rem, caps[i]); configObj[order[i]] = take; rem -= take;
+  }
+  const exc = {
+    24: {"4s":1,"3d":5}, 29: {"4s":1,"3d":10}, 41: {"5s":1,"4d":4}, 42: {"5s":1,"4d":5},
+    44: {"5s":1,"4d":7}, 45: {"5s":1,"4d":8}, 46: {"5s":0,"4d":10}, 47: {"5s":1,"4d":10},
+    57: {"6s":2,"4f":0,"5d":1}, 58: {"6s":2,"4f":1,"5d":1}, 64: {"6s":2,"4f":7,"5d":1},
+    78: {"6s":1,"4f":14,"5d":9}, 79: {"6s":1,"4f":14,"5d":10},
+    89: {"7s":2,"5f":0,"6d":1}, 90: {"7s":2,"5f":0,"6d":2}, 91: {"7s":2,"5f":2,"6d":1},
+    92: {"7s":2,"5f":3,"6d":1}, 93: {"7s":2,"5f":4,"6d":1}, 96: {"7s":2,"5f":7,"6d":1}
+  };
+  if (exc[z]) Object.assign(configObj, exc[z]);
+  let lVal = {"s":0,"p":1,"d":2,"f":3};
+  let present = Object.keys(configObj).filter(k => configObj[k] > 0);
+  if (core) {
+    let cRem = core.z; let cObj = {};
+    for (let i=0; i<order.length; i++) {
+      if (cRem <= 0) break; let take = Math.min(cRem, caps[i]); cObj[order[i]] = take; cRem -= take;
+    }
+    present = present.filter(k => configObj[k] > (cObj[k] || 0));
+  }
+  present.sort((a,b) => {
+    if (a[0] !== b[0]) return parseInt(a[0]) - parseInt(b[0]);
+    return lVal[a[1]] - lVal[b[1]];
+  });
+  let res = core ? [core.s] : [];
+  present.forEach(k => res.push(k + toSuperscript(configObj[k])));
+  return res.join(" ");
+}
+
+function getDetailedConfig(z) {
+  if (z === 1) return {"1s": 1}; if (z === 2) return {"1s": 2};
+  const order = ["1s","2s","2p","3s","3p","4s","3d","4p","5s","4d","5p","6s","4f","5d","6p","7s","5f","6d","7p"];
+  const caps = [2, 2, 6, 2, 6, 2, 10, 6, 2, 10, 6, 2, 14, 10, 6, 2, 14, 10, 6];
+  let rem = z; let configObj = {};
+  for (let i = 0; i < order.length; i++) {
+    if (rem <= 0) break; let take = Math.min(rem, caps[i]); configObj[order[i]] = take; rem -= take;
+  }
+  const exc = {
+    24: {"4s":1,"3d":5}, 29: {"4s":1,"3d":10}, 41: {"5s":1,"4d":4}, 42: {"5s":1,"4d":5},
+    44: {"5s":1,"4d":7}, 45: {"5s":1,"4d":8}, 46: {"5s":0,"4d":10}, 47: {"5s":1,"4d":10},
+    57: {"6s":2,"4f":0,"5d":1}, 58: {"6s":2,"4f":1,"5d":1}, 64: {"6s":2,"4f":7,"5d":1},
+    78: {"6s":1,"4f":14,"5d":9}, 79: {"6s":1,"4f":14,"5d":10},
+    89: {"7s":2,"5f":0,"6d":1}, 90: {"7s":2,"5f":0,"6d":2}, 91: {"7s":2,"5f":2,"6d":1},
+    92: {"7s":2,"5f":3,"6d":1}, 93: {"7s":2,"5f":4,"6d":1}, 96: {"7s":2,"5f":7,"6d":1}
+  };
+  if (exc[z]) Object.assign(configObj, exc[z]);
+  let active = {};
+  Object.keys(configObj).forEach(k => {
+    if (configObj[k] > 0) active[k] = configObj[k];
+  });
+  return active;
+}
+
+function getShells(z) {
+  let cap = [2, 8, 18, 32, 50, 72, 98];
+  let shells = [], rem = z;
+  for (let c of cap) {
+    if (rem <= 0) break;
+    let t = Math.min(rem, c);
+    shells.push(t); rem -= t;
+  }
+  return shells;
+}
+
+const elements = rawData.map(d => ({ z: d[0], sym: d[1], row: d[2], col: d[3], cat: d[4], name: elementNames[d[0]-1], shells: getShells(d[0]) }));
+
+// Default element selection set to Hydrogen (Z=1)
+let selected = elements.find(el => el.z === 1) || elements[0]; 
+let rotationAngle = 0;
+let orbitalAnimId = null;
+let activeOrbitalRenderers = [];
+
+function animate() {
+  const canvas = document.getElementById('bohrCanvas');
+  const ctx = canvas.getContext('2d');
+  const size = 300, center = size / 2;
+  
+  ctx.clearRect(0, 0, size, size);
+  const catColor = categories[selected.cat] || categories['nonmetal'];
+  const orbitColor = getComputedStyle(document.body).getPropertyValue('--orbit-line').trim();
+
+  // Nucleus
+  ctx.beginPath();
+  ctx.arc(center, center, 22, 0, Math.PI * 2);
+  ctx.fillStyle = catColor.text;
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(selected.sym, center, center);
+
+  const n = selected.shells.length;
+  const minR = 38, maxR = 135;
+  const step = n > 1 ? (maxR - minR) / (n - 1) : 0;
+
+  selected.shells.forEach((count, i) => {
+    const r = n === 1 ? 70 : minR + i * step;
+    ctx.beginPath();
+    ctx.arc(center, center, r, 0, Math.PI * 2);
+    ctx.strokeStyle = orbitColor; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]);
+    ctx.stroke(); ctx.setLineDash([]);
+
+    const speed = (n - i) * 0.006;
+    const offset = rotationAngle * (i % 2 === 0 ? speed : -speed);
+
+    for (let j = 0; j < count; j++) {
+      const angle = (j * 2 * Math.PI) / count - Math.PI / 2 + offset;
+      const x = center + r * Math.cos(angle), y = center + r * Math.sin(angle);
+      ctx.beginPath();
+      ctx.arc(x, y, 5.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#1a73e8'; ctx.fill();
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.2; ctx.stroke();
+    }
+  });
+
+  if (isPlaying) rotationAngle += 1;
+  requestAnimationFrame(animate);
+}
+
+// ----------------------------------------------------
+// ORBITAL ANIMATION RENDERER
+// ----------------------------------------------------
+function setupOrbitalsPanel() {
+  const grid = document.getElementById('orbitalsGrid');
+  grid.innerHTML = '';
+  activeOrbitalRenderers = [];
+
+  document.getElementById('orbitalsHeaderTitle').innerText = `${selected.name} (${selected.sym}) Atomic Orbitals`;
+  document.getElementById('orbitalsSubtitle').innerText = `Animated electron probability clouds for orbitals occupied in Z = ${selected.z}`;
+
+  const config = getDetailedConfig(selected.z);
+  const orbitalKeys = Object.keys(config);
+
+  orbitalKeys.forEach(orbKey => {
+    const count = config[orbKey];
+    const card = document.createElement('div');
+    card.className = 'orbital-card';
+
+    const title = document.createElement('div');
+    title.className = 'orbital-title';
+    title.innerHTML = `${orbKey} &nbsp;(<span style="color:#1a73e8">${count} e⁻</span>)`;
+    card.appendChild(title);
+
+    const box = document.createElement('div');
+    box.className = 'orbital-canvas-box';
+    const canvas = document.createElement('canvas');
+    canvas.width = 160;
+    canvas.height = 160;
+    box.appendChild(canvas);
+    card.appendChild(box);
+    grid.appendChild(card);
+
+    const subType = orbKey[1]; // 's', 'p', 'd', or 'f'
+    activeOrbitalRenderers.push({
+      canvas: canvas,
+      subType: subType,
+      orbKey: orbKey,
+      angle: Math.random() * Math.PI * 2
+    });
+  });
+}
+
+function renderOrbitalsLoop() {
+  activeOrbitalRenderers.forEach(item => {
+    const canvas = item.canvas;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height, cx = w / 2, cy = h / 2;
+
+    ctx.clearRect(0, 0, w, h);
+    item.angle += 0.02;
+
+    // Draw center nucleus dot
+    ctx.beginPath();
+    ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#e53935';
+    ctx.fill();
+
+    // Draw orbital shapes based on s, p, d, f
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(item.angle * 0.5);
+
+    if (item.subType === 's') {
+      let pulse = Math.sin(item.angle * 2) * 4;
+      let r = 36 + pulse;
+      
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(26, 115, 232, 0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([3, 3]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      for (let i = 0; i < 45; i++) {
+        let a = (i / 45) * Math.PI * 2 + item.angle;
+        let dist = (r * 0.2) + Math.sin(i * 9 + item.angle * 3) * (r * 0.6);
+        let px = Math.cos(a) * dist;
+        let py = Math.sin(a) * dist;
+        ctx.beginPath();
+        ctx.arc(px, py, 1.8, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(26, 115, 232, 0.7)';
+        ctx.fill();
+      }
+    } 
+    else if (item.subType === 'p') {
+      let length = 55;
+      let width = 22;
+
+      ctx.rotate(item.angle * 0.3);
+
+      for (let lobe = 0; lobe < 2; lobe++) {
+        ctx.save();
+        if (lobe === 1) ctx.rotate(Math.PI);
+
+        ctx.beginPath();
+        ctx.ellipse(0, length / 2, width, length / 2, 0, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(52, 168, 83, 0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(52, 168, 83, 0.12)';
+        ctx.fill();
+
+        for (let i = 0; i < 25; i++) {
+          let lx = (Math.random() - 0.5) * width * 1.4;
+          let ly = (Math.random() * length);
+          if (Math.hypot(lx / width, (ly - length / 2) / (length / 2)) < 1.0) {
+            ctx.beginPath();
+            ctx.arc(lx, ly, 1.5, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(52, 168, 83, 0.8)';
+            ctx.fill();
+          }
+        }
+        ctx.restore();
+      }
+    } 
+    else if (item.subType === 'd') {
+      let lobeDist = 42;
+      let radius = 22;
+
+      for (let i = 0; i < 4; i++) {
+        ctx.save();
+        ctx.rotate((i * Math.PI) / 2 + item.angle * 0.2);
+
+        ctx.beginPath();
+        ctx.ellipse(0, lobeDist, radius, radius * 1.2, 0, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(251, 188, 5, 0.5)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(251, 188, 5, 0.12)';
+        ctx.fill();
+
+        for (let p = 0; p < 15; p++) {
+          let dx = (Math.random() - 0.5) * radius * 1.5;
+          let dy = lobeDist + (Math.random() - 0.5) * radius * 1.8;
+          ctx.beginPath();
+          ctx.arc(dx, dy, 1.4, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(251, 188, 5, 0.8)';
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    } 
+    else if (item.subType === 'f') {
+      let lobeDist = 48;
+      let radius = 18;
+
+      for (let i = 0; i < 6; i++) {
+        ctx.save();
+        ctx.rotate((i * Math.PI) / 3 + item.angle * 0.15);
+
+        ctx.beginPath();
+        ctx.ellipse(0, lobeDist, radius, radius * 1.3, 0, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(161, 68, 210, 0.5)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(161, 68, 210, 0.12)';
+        ctx.fill();
+
+        for (let p = 0; p < 10; p++) {
+          let fx = (Math.random() - 0.5) * radius * 1.3;
+          let fy = lobeDist + (Math.random() - 0.5) * radius * 1.5;
+          ctx.beginPath();
+          ctx.arc(fx, fy, 1.3, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(161, 68, 210, 0.8)';
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+
+    ctx.restore();
+  });
+
+  orbitalAnimId = requestAnimationFrame(renderOrbitalsLoop);
+}
+
+function updateUI() {
+  document.getElementById('elementTitle').innerText = selected.name + ' (' + selected.sym + ')';
+
+  const shellLetters = ['K', 'L', 'M', 'N', 'O', 'P', 'Q'];
+  document.getElementById('shellTags').innerHTML = selected.shells
+    .map((c, i) => '<span class="shell-tag">n=' + (i + 1) + ' (' + shellLetters[i] + '): ' + c + 'e⁻</span>').join('');
+    
+  const z = selected.z; const a = massMap[z];
+  document.getElementById('detZ').innerText = z;
+  document.getElementById('detA').innerText = a;
+  document.getElementById('detP').innerText = z;
+  document.getElementById('detE').innerText = z;
+  document.getElementById('detN').innerText = a - z;
+  document.getElementById('detConf').innerText = getSPDF(z);
+
+  const activeCatColor = categories[selected.cat];
+  const cardElement = document.getElementById('elementCard');
+  cardElement.style.backgroundColor = activeCatColor.bg;
+  cardElement.style.color = activeCatColor.text;
+
+  document.getElementById('cardSym').innerText = selected.sym;
+  document.getElementById('cardName').innerText = selected.name;
+  document.getElementById('cardZ').innerText = selected.z;
+  document.getElementById('cardBody').innerText = getElementFact(selected);
+
+  document.querySelectorAll('.element-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.z == selected.z);
+  });
+
+  setupOrbitalsPanel();
+}
+
+function init() {
+  const legend = document.getElementById('legend');
+  Object.entries(categories).forEach(([category, cat]) => {
+    const legendItem = document.createElement('div');
+    legendItem.className = 'legend-item';
+    legendItem.dataset.cat = category;
+    legendItem.tabIndex = 0;
+    legendItem.setAttribute('aria-label', 'Highlight ' + cat.name + ' elements');
+    legendItem.innerHTML = '<div class="legend-box" style="background:' + cat.bg + ';border:1px solid ' + cat.text + '"></div>' + cat.name;
+    let isHovered = false;
+    let isFocused = false;
+    const updateCategoryHighlight = () => {
+      document.querySelectorAll('.element-btn').forEach(button => {
+        if (button.dataset.cat === legendItem.dataset.cat) {
+          button.classList.toggle('category-highlight', isHovered || isFocused);
+        }
+      });
+    };
+    legendItem.addEventListener('mouseenter', () => {
+      isHovered = true;
+      updateCategoryHighlight();
+    });
+    legendItem.addEventListener('mouseleave', () => {
+      isHovered = false;
+      updateCategoryHighlight();
+    });
+    legendItem.addEventListener('focus', () => {
+      isFocused = true;
+      updateCategoryHighlight();
+    });
+    legendItem.addEventListener('blur', () => {
+      isFocused = false;
+      updateCategoryHighlight();
+    });
+    legend.appendChild(legendItem);
+  });
+
+  const grid = document.getElementById('ptGrid');
+  
+  const groupUS = ["IA","IIA","IIIB","IVB","VB","VIB","VIIB","VIIIB","VIIIB","VIIIB","IB","IIB","IIIA","IVA","VA","VIA","VIIA","VIIIA"];
+  for(let c=1; c<=18; c++) {
+    let gh = document.createElement('div');
+    gh.className = 'grid-header';
+    gh.style.gridColumn = (c + 1).toString();
+    gh.style.gridRow = '1';
+    gh.innerHTML = `<span>${c}</span><span>${groupUS[c-1]}</span>`;
+    grid.appendChild(gh);
+  }
+
+  for(let r=1; r<=7; r++) {
+    let ph = document.createElement('div');
+    ph.className = 'grid-header row-header';
+    ph.style.gridColumn = '1';
+    ph.style.gridRow = (r + 1).toString();
+    ph.innerText = r;
+    grid.appendChild(ph);
+  }
+
+  let lanthanidePh = document.createElement('div');
+  lanthanidePh.className = 'grid-header row-header';
+  lanthanidePh.style.gridColumn = '1';
+  lanthanidePh.style.gridRow = '10';
+  lanthanidePh.innerText = '6*';
+  lanthanidePh.title = 'Period 6 (Lanthanide series)';
+  grid.appendChild(lanthanidePh);
+
+  let actinidePh = document.createElement('div');
+  actinidePh.className = 'grid-header row-header';
+  actinidePh.style.gridColumn = '1';
+  actinidePh.style.gridRow = '11';
+  actinidePh.innerText = '7*';
+  actinidePh.title = 'Period 7 (Actinide series)';
+  grid.appendChild(actinidePh);
+
+  elements.forEach(el => {
+    const cat = categories[el.cat];
+    const btn = document.createElement('button');
+    btn.className = 'element-btn';
+    btn.dataset.z = el.z;
+    btn.dataset.cat = el.cat;
+    btn.style.background = cat.bg;
+    btn.style.color = cat.text;
+    btn.innerHTML = '<span class="num">' + el.z + '</span><span class="sym">' + el.sym + '</span>';
+    
+    if (el.cat === "lanthanide") {
+      btn.style.gridRow = '10'; 
+      btn.style.gridColumn = (el.col + 1).toString();
+    } else if (el.cat === "actinide") {
+      btn.style.gridRow = '11'; 
+      btn.style.gridColumn = (el.col + 1).toString();
+    } else {
+      btn.style.gridRow = (el.row + 1).toString(); 
+      btn.style.gridColumn = (el.col + 1).toString(); 
+    }
+    
+    btn.onclick = () => { selected = el; updateUI(); };
+    grid.appendChild(btn);
+  });
+
+  const searchInput = document.getElementById('elSearch');
+  const dataList = document.getElementById('elList');
+  const searchEnterBtn = document.getElementById('searchEnterBtn');
+
+  elements.forEach(el => {
+    let optName = document.createElement('option'); optName.value = el.name; dataList.appendChild(optName);
+    let optSym = document.createElement('option'); optSym.value = el.sym; dataList.appendChild(optSym);
+  });
+
+  const triggerSearch = () => {
+    let val = searchInput.value.trim().toLowerCase();
+    let found = elements.find(el => el.name.toLowerCase() === val || el.sym.toLowerCase() === val);
+    if(found) {
+      selected = found;
+      updateUI();
+      searchInput.value = '';
+      searchInput.blur();
+    }
+  };
+
+  searchEnterBtn.addEventListener('click', triggerSearch);
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      triggerSearch();
+    }
+  });
+
+  updateUI();
+  animate();
+  renderOrbitalsLoop();
+}
+
+init();
+</script>
+</body>
+</html>
