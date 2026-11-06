@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const themeToggle = document.getElementById('theme-toggle');
   const btnPtable = document.getElementById('btn-ptable');
   const btnOrbitals = document.getElementById('btn-orbitals');
+  const btnOptics = document.getElementById('btn-optics');
 
   // Track active mode state (default is dark mode)
   let isDarkMode = true;
@@ -43,5 +44,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   btnOrbitals.addEventListener('click', () => {
     openInNewTab('Chemistry/Orbitals.html');
+  });
+
+  btnOptics.addEventListener('click', () => {
+    openInNewTab('Physics/Optics.html');
   });
 });

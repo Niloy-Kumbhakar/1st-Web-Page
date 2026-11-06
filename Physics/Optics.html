@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Optics Lab: Reflection & Refraction</title>
+    <style>
+        /* Warm Orangish Theme Variables (Dark & Light) */
+        :root {
+            --bg-color: #12100e;
+            --card-bg: #1c1815;
+            --text-color: #fef3c7;
+            --text-muted: #d6d3d1;
+            --accent-color: #f97316;
+            --accent-hover: #ea580c;
+            --slider-color: #3b82f6;
+            --border-color: #44403c;
+            --canvas-bg: #0c0a09;
+            --ray-real: #fbbf24;
+            --ray-virtual: #3b82f6;
+            --object-color: #ec4899;
+            --image-color: #10b981;
+            --axis-color: #78716c;
+            --silver-metal: #cbd5e1;
+            --silver-shine: #f8fafc;
+            --formula-bg: #181412;
+            --nav-bg: #1c1815;
+            --shadow: 0 10px 20px -3px rgba(249, 115, 22, 0.15);
+        }
+
+        [data-theme="light"] {
+            --bg-color: #fffaf5;
+            --card-bg: #ffffff;
+            --text-color: #292524;
+            --text-muted: #78716c;
+            --accent-color: #ea580c;
+            --accent-hover: #c2410c;
+            --slider-color: #2563eb;
+            --border-color: #fed7aa;
+            --canvas-bg: #fff7ed;
+            --ray-real: #d97706;
+            --ray-virtual: #2563eb;
+            --object-color: #db2777;
+            --image-color: #059669;
+            --axis-color: #d6d3d1;
+            --silver-metal: #94a3b8;
+            --silver-shine: #64748b;
+            --formula-bg: #ffedd5;
+            --nav-bg: #ffffff;
+            --shadow: 0 10px 15px -3px rgba(234, 88, 12, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--nav-bg);
+            border-bottom: 2px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+        }
+
+        .logo-area h1 {
+            font-size: 1.5rem;
+            color: var(--accent-color);
+            font-weight: 700;
+        }
+
+        .logo-area p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .controls-top {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .theme-toggle {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent-color);
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--card-bg);
+            padding: 0.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-color);
+            color: #ffffff;
+        }
+
+        main {
+            flex: 1;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 2rem;
+        }
+
+        @media(max-width: 1024px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .sidebar {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            height: fit-content;
+            box-shadow: var(--shadow);
+        }
+
+        .sidebar h3 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--accent-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .control-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+        }
+
+        select, input[type="range"] {
+            width: 100%;
+            padding: 0.7rem;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        input[type="range"] {
+            accent-color: var(--slider-color);
+            cursor: pointer;
+        }
+
+        .workspace {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .canvas-container {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1rem;
+            position: relative;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        canvas {
+            background: var(--canvas-bg);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 850px;
+            height: 420px;
+            cursor: grab;
+            border: 1px solid var(--border-color);
+        }
+
+        canvas:active {
+            cursor: grabbing;
+        }
+
+        .canvas-instructions {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media(max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .card h4 {
+            color: var(--accent-color);
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .formula-box {
+            background: var(--formula-bg);
+            border: 1px solid var(--border-color);
+            padding: 1rem;
+            border-radius: 10px;
+            text-align: center;
+            font-family: 'Cambria Math', 'Times New Roman', serif;
+            font-size: 1.25rem;
+            margin: 0.75rem 0;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+        }
+
+        .stat-val {
+            font-weight: 600;
+        }
+
+        .explanation-text {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-top: 0.5rem;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.85rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            background: var(--nav-bg);
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-area">
+            <h1>OpticsLab Interactive</h1>
+            <p>Optics & Multi-Ray Simulation Suite</p>
+        </div>
+        <div class="controls-top">
+            <div class="nav-tabs">
+                <button class="tab-btn active" data-category="plane" onclick="switchCategory('plane')">Plane Mirror</button>
+                <button class="tab-btn" data-category="curved" onclick="switchCategory('curved')">Curved Mirrors</button>
+                <button class="tab-btn" data-category="lens" onclick="switchCategory('lens')">Lenses(under development)</button>
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <span id="themeIcon">☀️</span> <span id="themeText">Light Mode</span>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <aside class="sidebar">
+            <h3 id="panelTitle">Plane Mirror Settings</h3>
+            
+            <div class="control-group" id="groupSubCategory">
+                <label id="subCatLabel">Mirroring Type</label>
+                <select id="subCategorySelect" onchange="updateSimulation()">
+                    <option value="plane">Plane Mirror (Flat)</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>Object Distance (<i>u</i>): <span id="uVal">150</span></label>
+                <input type="range" id="objectDist" min="60" max="321" value="150" oninput="updateSimulation()" aria-label="Object distance; move fully right for infinity">
+                <small class="canvas-instructions">Slide fully right for infinity.</small>
+            </div>
+
+            <div class="control-group">
+                <label><input type="checkbox" id="pointObject" onchange="updateSimulation()"> Use point object</label>
+            </div>
+
+            <div class="control-group">
+                <label><span id="heightLabel">Object Height (<i>h</i>)</span>: <span id="hVal">60</span> px</label>
+                <input type="range" id="objectHeight" min="20" max="100" value="60" oninput="updateSimulation()">
+            </div>
+
+            <div class="control-group" id="focalGroup" style="display:none;">
+                <label>Focal Length (<i>f</i>): <span id="fVal">100</span> px</label>
+                <input type="range" id="focalLength" min="60" max="180" value="100" oninput="updateSimulation()">
+            </div>
+
+            <div class="control-group" id="refIndexGroup" style="display:none;">
+                <label>Refractive Index (<i>n</i>): <span id="nVal">1.5</span></label>
+                <input type="range" id="refIndex" min="1.1" max="2.5" step="0.1" value="1.5" oninput="updateSimulation()">
+            </div>
+
+            <div class="legend">
+                <div class="legend-item"><div class="legend-dot" style="background:var(--object-color)"></div>Object</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--image-color)"></div>Image</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--ray-real)"></div>Real Ray</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--ray-virtual)"></div>Virtual Ray</div>
+            </div>
+        </aside>
+
+        <div class="workspace">
+            <div class="canvas-container">
+                <canvas id="opticsCanvas" width="850" height="420"></canvas>
+                <div class="canvas-instructions">💡 Tip: Click and drag the pink Object arrow on the canvas to move it in real-time!</div>
+            </div>
+
+            <div class="info-grid">
+                <div class="card">
+                    <h4 id="caseTitle">Physics Formulas</h4>
+                    <div class="formula-box" id="formulaDisplay">--</div>
+                    <div id="dynamicFormulas"></div>
+                </div>
+
+                <div class="card">
+                    <h4>Detailed Optics Behavior</h4>
+                    <p class="explanation-text" id="explanationText">
+                        Select a category and adjust parameters to observe multiple principal light rays converging or diverging through silver optical components.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        Interactive Optics Simulator &copy; 2026 | Silver Optics Lab
+    </footer>
+
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            
+            document.getElementById('themeIcon').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            document.getElementById('themeText').textContent = newTheme === 'dark' ? 'Light Mode' : 'Dark Mode';
+            draw();
+        }
+
+        let currentCategory = 'plane';
+        let isDragging = false;
+
+        const canvas = document.getElementById('opticsCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const subCategorySelect = document.getElementById('subCategorySelect');
+        const subCatLabel = document.getElementById('subCatLabel');
+        const groupSubCategory = document.getElementById('groupSubCategory');
+        const focalGroup = document.getElementById('focalGroup');
+        const refIndexGroup = document.getElementById('refIndexGroup');
+        const panelTitle = document.getElementById('panelTitle');
+
+        const objDistInput = document.getElementById('objectDist');
+        const objHeightInput = document.getElementById('objectHeight');
+        const pointObjectInput = document.getElementById('pointObject');
+        const heightLabel = document.getElementById('heightLabel');
+        const focalLengthInput = document.getElementById('focalLength');
+        const refIndexInput = document.getElementById('refIndex');
+
+        const uValSpan = document.getElementById('uVal');
+        const hValSpan = document.getElementById('hVal');
+        const fValSpan = document.getElementById('fVal');
+        const nValSpan = document.getElementById('nVal');
+
+        const caseTitle = document.getElementById('caseTitle');
+        const formulaDisplay = document.getElementById('formulaDisplay');
+        const dynamicFormulas = document.getElementById('dynamicFormulas');
+        const explanationText = document.getElementById('explanationText');
+
+        function switchCategory(category) {
+            currentCategory = category;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.querySelector(`.tab-btn[data-category="${category}"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+            }
+
+            subCategorySelect.innerHTML = '';
+            focalGroup.style.display = 'none';
+            refIndexGroup.style.display = 'none';
+
+            if (category === 'plane') {
+                panelTitle.textContent = 'Plane Mirror Settings';
+                subCatLabel.textContent = 'Reflection Type';
+                groupSubCategory.style.display = 'block';
+                subCategorySelect.innerHTML = `<option value="plane">Silvered Flat Mirror</option>`;
+            } else if (category === 'curved') {
+                panelTitle.textContent = 'Spherical Mirror Settings';
+                subCatLabel.textContent = 'Mirror Type';
+                groupSubCategory.style.display = 'block';
+                focalGroup.style.display = 'block';
+                subCategorySelect.innerHTML = `
+                    <option value="concave">Concave Mirror (Converging)</option>
+                    <option value="convex">Convex Mirror (Diverging)</option>
+                `;
+            } else if (category === 'lens') {
+                panelTitle.textContent = 'Lens Settings';
+                subCatLabel.textContent = 'Lens Type';
+                groupSubCategory.style.display = 'block';
+                focalGroup.style.display = 'block';
+                refIndexGroup.style.display = 'block';
+                subCategorySelect.innerHTML = `
+                    <option value="biconvex">Biconvex (Converging)</option>
+                    <option value="biconcave">Biconcave (Diverging)</option>
+                    <option value="planoconvex">Plano-Convex</option>
+                    <option value="planoconcave">Plano-Concave</option>
+                    <option value="concavoconvex">Concavo-Convex (Meniscus)</option>
+                    <option value="convexoconcave">Convexo-Concave (Meniscus)</option>
+                `;
+            }
+
+            updateSimulation();
+        }
+
+        function updateSimulation() {
+            const atInfinity = Number(objDistInput.value) === Number(objDistInput.max);
+            uValSpan.textContent = atInfinity ? '∞' : `${objDistInput.value} px`;
+            hValSpan.textContent = objHeightInput.value;
+            heightLabel.innerHTML = pointObjectInput.checked ? 'Point Height' : 'Object Height (<i>h</i>)';
+            fValSpan.textContent = focalLengthInput.value;
+            nValSpan.textContent = refIndexInput.value;
+            draw();
+        }
+
+        function getOpticsParams() {
+            const atInfinity = Number(objDistInput.value) === Number(objDistInput.max);
+            const u = atInfinity ? Infinity : parseFloat(objDistInput.value);
+            const h = parseFloat(objHeightInput.value);
+            const f = parseFloat(focalLengthInput.value);
+            const n = parseFloat(refIndexInput.value);
+            const subType = subCategorySelect.value;
+            const originX = canvas.width / 2;
+            const originY = canvas.height / 2;
+            return { u, h, f, n, subType, originX, originY, atInfinity, isPointObject: pointObjectInput.checked };
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const params = getOpticsParams();
+            drawPrincipalAxis(params.originX, params.originY);
+
+            if (currentCategory === 'plane') {
+                drawPlaneMirrorSimulation(params);
+            } else if (currentCategory === 'curved') {
+                drawCurvedMirrorSimulation(params);
+            } else if (currentCategory === 'lens') {
+                drawLensSimulation(params);
+            }
+        }
+
+        function drawPrincipalAxis(ox, oy) {
+            const cssComputed = getComputedStyle(document.documentElement);
+            ctx.strokeStyle = cssComputed.getPropertyValue('--axis-color').trim();
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([6, 6]);
+            ctx.beginPath();
+            ctx.moveTo(20, oy);
+            ctx.lineTo(canvas.width - 20, oy);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        // ==================== 1. PLANE MIRROR ====================
+        function drawPlaneMirrorSimulation(p) {
+            const mirrorX = p.originX;
+            const objX = p.atInfinity ? 30 : mirrorX - p.u;
+            const objY = p.originY - p.h;
+            const imgX = mirrorX + p.u;
+            const imgY = objY;
+
+            // Silver Mirror Surface
+            const silverColor = getComputedStyle(document.documentElement).getPropertyValue('--silver-metal').trim();
+            ctx.strokeStyle = silverColor;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(mirrorX, p.originY - 140);
+            ctx.lineTo(mirrorX, p.originY + 140);
+            ctx.stroke();
+
+            // Silver Hatching (Back side)
+            ctx.lineWidth = 1;
+            for (let y = p.originY - 140; y <= p.originY + 140; y += 12) {
+                ctx.beginPath();
+                ctx.moveTo(mirrorX, y);
+                ctx.lineTo(mirrorX + 10, y + 10);
+                ctx.stroke();
+            }
+
+            const rayReal = getComputedStyle(document.documentElement).getPropertyValue('--ray-real').trim();
+            const rayVirtual = getComputedStyle(document.documentElement).getPropertyValue('--ray-virtual').trim();
+
+            if (p.atInfinity) {
+                drawPointObject(objX, p.originY, 'Object at infinity');
+                [-40, 40].forEach((offset) => {
+                    const hitY = p.originY + offset;
+                    drawRayLine(20, hitY, mirrorX, hitY, rayReal);
+                    drawRayLine(mirrorX, hitY, 20, hitY, rayReal);
+                    drawDashedRayLine(mirrorX, hitY, canvas.width - 20, hitY, rayVirtual);
+                });
+                caseTitle.textContent = 'Silvered Plane Mirror Reflection';
+                formulaDisplay.innerHTML = `v = −u &nbsp;&nbsp;|&nbsp;&nbsp; m = +1`;
+                dynamicFormulas.innerHTML = `
+                    <div class="stat-row"><span class="stat-label">Object Distance (u):</span><span class="stat-val">∞</span></div>
+                    <div class="stat-row"><span class="stat-label">Image Distance (v):</span><span class="stat-val">∞ (Behind mirror)</span></div>
+                    <div class="stat-row"><span class="stat-label">Magnification (m):</span><span class="stat-val">+1 (Erect & Equal)</span></div>
+                    <div class="stat-row"><span class="stat-label">Nature of Image:</span><span class="stat-val">Virtual and Erect</span></div>
+                `;
+                explanationText.innerHTML = 'Parallel rays from an object at infinity reflect from a plane mirror and appear to meet at infinity behind the mirror.';
+                return;
+            }
+
+            drawOpticalObject(objX, p.originY, objY, getComputedStyle(document.documentElement).getPropertyValue('--object-color').trim(), 'Object (O)', p.isPointObject);
+            drawOpticalObject(imgX, p.originY, imgY, getComputedStyle(document.documentElement).getPropertyValue('--image-color').trim(), 'Image (I)', p.isPointObject, true);
+
+            const hitYs = [objY, p.originY];
+            hitYs.forEach((hitY) => {
+                const slope = (imgY - hitY) / (imgX - mirrorX);
+                const reflectedEndY = hitY + slope * (20 - mirrorX);
+                drawRayLine(objX, objY, mirrorX, hitY, rayReal);
+                drawRayLine(mirrorX, hitY, 20, reflectedEndY, rayReal);
+                drawDashedRayLine(mirrorX, hitY, imgX, imgY, rayVirtual);
+            });
+
+            caseTitle.textContent = "Silvered Plane Mirror Reflection";
+            formulaDisplay.innerHTML = `v = -u &nbsp;&nbsp;|&nbsp;&nbsp; m = +1`;
+            dynamicFormulas.innerHTML = `
+                <div class="stat-row"><span class="stat-label">Object Distance (u):</span><span class="stat-val">-${p.u} px</span></div>
+                <div class="stat-row"><span class="stat-label">Image Distance (v):</span><span class="stat-val">+${p.u} px (Behind mirror)</span></div>
+                <div class="stat-row"><span class="stat-label">Magnification (m):</span><span class="stat-val">+1 (Erect & Equal)</span></div>
+                <div class="stat-row"><span class="stat-label">Nature of Image:</span><span class="stat-val">Virtual and Erect</span></div>
+            `;
+            explanationText.innerHTML = `
+                A flat silver mirror produces a <b>virtual, erect, and identically sized</b> image. The distance of the image behind the mirror equals the object distance in front. Two principal rays illustrate regular reflection.
+            `;
+        }
+
+        // ==================== 2. CURVED MIRRORS ====================
+        function drawCurvedMirrorSimulation(p) {
+            const mirrorX = p.originX;
+            const isConcave = p.subType === 'concave';
+            // Correct sign conventions: Concave mirror has real focus in front (-f), Convex has virtual focus behind (+f)
+            const f = isConcave ? -p.f : p.f; 
+            const R = 2 * Math.abs(f);
+
+            const silverColor = getComputedStyle(document.documentElement).getPropertyValue('--silver-metal').trim();
+            // Draw the reflecting surface as a paraxial parabola with focal length f.
+            ctx.strokeStyle = silverColor;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            for (let y = -120; y <= 120; y += 2) {
+                const surfaceX = mirrorX + (isConcave ? -1 : 1) * (y * y) / (4 * p.f);
+                if (y === -120) {
+                    ctx.moveTo(surfaceX, p.originY + y);
+                } else {
+                    ctx.lineTo(surfaceX, p.originY + y);
+                }
+            }
+            ctx.stroke();
+
+            // Hatch the non-reflecting side of each mirror.
+            ctx.lineWidth = 1;
+            for (let y = p.originY - 120; y <= p.originY + 120; y += 12) {
+                const offset = y - p.originY;
+                const surfaceX = mirrorX + (isConcave ? -1 : 1) * (offset * offset) / (4 * p.f);
+                ctx.beginPath();
+                ctx.moveTo(surfaceX + 2, y);
+                ctx.lineTo(surfaceX + 12, y + 8);
+                ctx.stroke();
+            }
+
+            // Focal & Center points markers
+            const fPtX = mirrorX + f;
+            const cPtX = mirrorX + (isConcave ? -R : R);
+            drawPointMarker(fPtX, p.originY, 'F');
+            drawPointMarker(cPtX, p.originY, 'C');
+
+            if (p.atInfinity) {
+                const rayReal = getComputedStyle(document.documentElement).getPropertyValue('--ray-real').trim();
+                const rayVirtual = getComputedStyle(document.documentElement).getPropertyValue('--ray-virtual').trim();
+                const objectX = 30;
+                const focusX = mirrorX + f;
+                drawPointObject(objectX, p.originY, 'Object at infinity');
+                [-40, 40].forEach((offset) => {
+                    const hitY = p.originY + offset;
+                    const hitX = mirrorX + (isConcave ? -1 : 1) * (offset * offset) / (4 * p.f);
+                    drawRayLine(20, hitY, hitX, hitY, rayReal);
+                    const reflectedY = hitY + (20 - hitX) * (p.originY - hitY) / (focusX - hitX);
+                    drawRayLine(hitX, hitY, 20, reflectedY, rayReal);
+                    if (!isConcave) {
+                        drawDashedRayLine(hitX, hitY, focusX, p.originY, rayVirtual);
+                    }
+                });
+                if (Number.isFinite(focusX)) {
+                    drawPointObject(focusX, p.originY, isConcave ? 'Image at F' : 'Virtual image at F', getComputedStyle(document.documentElement).getPropertyValue('--image-color').trim());
+                }
+                caseTitle.textContent = isConcave ? 'Silvered Concave Mirror (Converging)' : 'Silvered Convex Mirror (Diverging)';
+                formulaDisplay.innerHTML = `<sup>1</sup>&frasl;<sub>f</sub> = <sup>1</sup>&frasl;<sub>v</sub> + <sup>1</sup>&frasl;<sub>u</sub>`;
+                dynamicFormulas.innerHTML = `
+                    <div class="stat-row"><span class="stat-label">Object Distance (u):</span><span class="stat-val">∞</span></div>
+                    <div class="stat-row"><span class="stat-label">Focal Length (f):</span><span class="stat-val">${Math.abs(f)} px</span></div>
+                    <div class="stat-row"><span class="stat-label">Image Distance (v):</span><span class="stat-val">${Math.abs(f)} px</span></div>
+                    <div class="stat-row"><span class="stat-label">Nature:</span><span class="stat-val">${isConcave ? 'Real & Inverted' : 'Virtual & Erect'}</span></div>
+                `;
+                explanationText.innerHTML = isConcave
+                    ? 'Parallel rays from an object at infinity converge at the real focus of the concave mirror.'
+                    : 'Parallel rays reflected by a convex mirror diverge as if they came from its virtual focus.';
+                return;
+            }
+
+            // Mirror Formula: 1/f = 1/v + 1/u  => v = (f * u_signed) / (u_signed - f)
+            const uSigned = -p.u; // Object is in front (-u)
+            const denominator = uSigned - f;
+            const v = denominator === 0 ? -Infinity : (f * uSigned) / denominator;
+            const m = -v / uSigned;
+
+            const objX = mirrorX + uSigned;
+            const objY = p.originY - p.h;
+            const imgX = mirrorX + v;
+            const imgY = p.originY - (p.h * m);
+
+            drawOpticalObject(objX, p.originY, objY, getComputedStyle(document.documentElement).getPropertyValue('--object-color').trim(), 'Object', p.isPointObject);
+
+            let isVirtual = isConcave ? (v > 0) : true; // Convex always virtual, concave virtual when u < f
+            let imageLabel = isVirtual ? 'Virtual Image (I)' : 'Real Image (I)';
+            
+            if (Number.isFinite(imgX) && Number.isFinite(imgY) && Math.abs(imgX - mirrorX) < canvas.width * 1.5) {
+                drawOpticalObject(imgX, p.originY, imgY, getComputedStyle(document.documentElement).getPropertyValue('--image-color').trim(), imageLabel, p.isPointObject, isVirtual);
+            }
+
+            // Draw 2 Principal Rays for Curved Mirrors
+            drawCurvedMirrorRays(mirrorX, p.originY, objX, objY, f, v, imgX, imgY, isConcave, isVirtual);
+
+            caseTitle.textContent = isConcave ? "Silvered Concave Mirror (Converging)" : "Silvered Convex Mirror (Diverging)";
+            formulaDisplay.innerHTML = `<sup>1</sup>&frasl;<sub>f</sub> = <sup>1</sup>&frasl;<sub>v</sub> + <sup>1</sup>&frasl;<sub>u</sub> &nbsp;&nbsp;|&nbsp;&nbsp; m = − <sup>v</sup>&frasl;<sub>u</sub>`;
+            
+            let caseDesc = "";
+            if (isConcave) {
+                if (Math.abs(uSigned) < Math.abs(f)) {
+                    caseDesc = "Object between Pole and Focus (u < f). Forms an enlarged, upright, and virtual image behind the mirror.";
+                } else if (Math.abs(uSigned) === Math.abs(f)) {
+                    caseDesc = "Object at Focus (u = f). Reflected rays are parallel; image is formed at infinity.";
+                } else if (Math.abs(uSigned) < R) {
+                    caseDesc = "Object between Focus and Center (f < u < 2f). Forms a real, inverted, magnified image beyond C.";
+                } else if (Math.abs(uSigned) === R) {
+                    caseDesc = "Object at Center of Curvature (u = 2f). Forms a real, inverted image of identical size at C.";
+                } else {
+                    caseDesc = "Object beyond Center of Curvature (u > 2f). Forms a real, inverted, diminished image between F and C.";
+                }
+            } else {
+                caseDesc = "A convex mirror always diverges parallel and incident light, forming a diminished, upright, virtual image behind the mirror.";
+            }
+
+            dynamicFormulas.innerHTML = `
+                <div class="stat-row"><span class="stat-label">Object Dist (u):</span><span class="stat-val">-${p.u} px</span></div>
+                <div class="stat-row"><span class="stat-label">Focal Length (f):</span><span class="stat-val">${Math.abs(f)} px</span></div>
+                <div class="stat-row"><span class="stat-label">Image Dist (v):</span><span class="stat-val">${Number.isFinite(v) ? `${Math.round(v)} px` : 'Infinity'}</span></div>
+                <div class="stat-row"><span class="stat-label">Magnification (m):</span><span class="stat-val">${m.toFixed(2)}</span></div>
+                <div class="stat-row"><span class="stat-label">Nature:</span><span class="stat-val">${Number.isFinite(v) ? (isVirtual ? 'Virtual & Erect' : 'Real & Inverted') : 'At Infinity (Parallel Rays)'}</span></div>
+            `;
+            explanationText.innerHTML = caseDesc;
+        }
+
+        function drawCurvedMirrorRays(mx, oy, ox, oy_obj, f, v, ix, iy, isConcave, isVirtual) {
+            const rayReal = getComputedStyle(document.documentElement).getPropertyValue('--ray-real').trim();
+            const rayVirtual = getComputedStyle(document.documentElement).getPropertyValue('--ray-virtual').trim();
+            const leftEdge = 20;
+            const surfaceXAt = (y) => mx + (isConcave ? -1 : 1) * ((y - oy) * (y - oy)) / (4 * Math.abs(f));
+            [oy_obj, oy].forEach((hitY) => {
+                const hitX = surfaceXAt(hitY);
+                drawRayLine(ox, oy_obj, hitX, hitY, rayReal);
+
+                const outgoingY = Number.isFinite(v)
+                    ? hitY + (leftEdge - hitX) * (iy - hitY) / (ix - hitX)
+                    : hitY;
+                drawRayLine(hitX, hitY, leftEdge, outgoingY, rayReal);
+                if (isVirtual && Number.isFinite(ix) && Number.isFinite(iy)) {
+                    drawDashedRayLine(hitX, hitY, ix, iy, rayVirtual);
+                }
+            });
+        }
+
+        function getLensBoundsAtY(subType, lensX, originY, y) {
+            const ratio = Math.max(-1, Math.min(1, (y - originY) / 120));
+            const curve = 1 - ratio * ratio;
+            if (subType === 'biconvex') {
+                return { left: lensX - 30 * curve, right: lensX + 30 * curve };
+            }
+            if (subType === 'biconcave') {
+                return { left: lensX - 18 + 15 * curve, right: lensX + 18 - 15 * curve };
+            }
+            if (subType === 'planoconvex') {
+                return { left: lensX - 12, right: lensX - 12 + 23.5 * curve };
+            }
+            if (subType === 'planoconcave') {
+                return { left: lensX - 12, right: lensX + 20 - 16 * curve };
+            }
+            if (subType === 'concavoconvex') {
+                return { left: lensX - 12 + 14 * curve, right: lensX + 12 + 16 * curve };
+            }
+            return { left: lensX - 18 + 18 * curve, right: lensX + 18 - 7 * curve };
+        }
+
+        // ==================== 3. LENSES ====================
+        function drawLensSimulation(p) {
+            const lensX = p.originX;
+            const subType = p.subType;
+            const isConvexType = ['biconvex', 'planoconvex', 'concavoconvex'].includes(subType);
+            // Focal length sign
+            const f = isConvexType ? p.f : -p.f;
+
+            const silverColor = getComputedStyle(document.documentElement).getPropertyValue('--silver-metal').trim();
+
+            // Draw Specialized Lens Shapes
+            ctx.strokeStyle = silverColor;
+            ctx.lineWidth = 3;
+            ctx.fillStyle = silverColor;
+
+            ctx.beginPath();
+            if (subType === 'biconvex') {
+                ctx.moveTo(lensX, p.originY - 120);
+                ctx.quadraticCurveTo(lensX - 30, p.originY, lensX, p.originY + 120);
+                ctx.quadraticCurveTo(lensX + 30, p.originY, lensX, p.originY - 120);
+                ctx.closePath();
+            } else if (subType === 'biconcave') {
+                ctx.moveTo(lensX - 18, p.originY - 120);
+                ctx.quadraticCurveTo(lensX + 12, p.originY, lensX - 18, p.originY + 120);
+                ctx.lineTo(lensX + 18, p.originY + 120);
+                ctx.quadraticCurveTo(lensX - 12, p.originY, lensX + 18, p.originY - 120);
+                ctx.closePath();
+            } else if (subType === 'planoconvex') {
+                ctx.moveTo(lensX - 12, p.originY - 120);
+                ctx.lineTo(lensX - 12, p.originY + 120);
+                ctx.quadraticCurveTo(lensX + 35, p.originY, lensX - 12, p.originY - 120);
+            } else if (subType === 'planoconcave') {
+                ctx.moveTo(lensX + 20, p.originY - 120);
+                ctx.quadraticCurveTo(lensX - 12, p.originY, lensX + 20, p.originY + 120);
+                ctx.lineTo(lensX - 12, p.originY + 120);
+                ctx.lineTo(lensX - 12, p.originY - 120);
+                ctx.closePath();
+            } else if (subType === 'concavoconvex') {
+                ctx.moveTo(lensX - 12, p.originY - 120);
+                ctx.quadraticCurveTo(lensX + 16, p.originY, lensX - 12, p.originY + 120);
+                ctx.lineTo(lensX + 12, p.originY + 120);
+                ctx.quadraticCurveTo(lensX + 44, p.originY, lensX + 12, p.originY - 120);
+                ctx.closePath();
+            } else if (subType === 'convexoconcave') {
+                ctx.moveTo(lensX - 18, p.originY - 120);
+                ctx.quadraticCurveTo(lensX + 18, p.originY, lensX - 18, p.originY + 120);
+                ctx.lineTo(lensX + 18, p.originY + 120);
+                ctx.quadraticCurveTo(lensX + 4, p.originY, lensX + 18, p.originY - 120);
+                ctx.closePath();
+            }
+            ctx.globalAlpha = 0.2;
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            ctx.stroke();
+
+            // Focal markers
+            drawPointMarker(lensX - Math.abs(f), p.originY, 'F₁');
+            drawPointMarker(lensX + Math.abs(f), p.originY, 'F₂');
+
+            if (p.atInfinity) {
+                const imageX = lensX + f;
+                drawPointObject(30, p.originY, 'Object at infinity');
+                drawPointObject(imageX, p.originY, isConvexType ? 'Image at F₂' : 'Virtual image at F₁', getComputedStyle(document.documentElement).getPropertyValue('--image-color').trim());
+                drawLensInfinityRays(lensX, p.originY, p.subType, f, isConvexType);
+                caseTitle.textContent = `${subType.toUpperCase()} Lens Refraction`;
+                formulaDisplay.innerHTML = `<sup>1</sup>&frasl;<sub>f</sub> = <sup>1</sup>&frasl;<sub>v</sub> − <sup>1</sup>&frasl;<sub>u</sub>`;
+                dynamicFormulas.innerHTML = `
+                    <div class="stat-row"><span class="stat-label">Object Dist (u):</span><span class="stat-val">∞</span></div>
+                    <div class="stat-row"><span class="stat-label">Focal Length (f):</span><span class="stat-val">${Math.abs(f)} px</span></div>
+                    <div class="stat-row"><span class="stat-label">Image Dist (v):</span><span class="stat-val">${Math.abs(f)} px</span></div>
+                    <div class="stat-row"><span class="stat-label">Refractive Index (n):</span><span class="stat-val">${p.n}</span></div>
+                `;
+                explanationText.innerHTML = isConvexType
+                    ? `Parallel rays from an object at infinity converge at the focal point of this lens (n = ${p.n}).`
+                    : `Parallel rays from an object at infinity diverge as if they came from the virtual focal point of this lens (n = ${p.n}).`;
+                return;
+            }
+
+            // Lens Formula: 1/f = 1/v - 1/u => v = (f * u_signed) / (u_signed + f)
+            const uSigned = -p.u;
+            const denominator = uSigned + f;
+            const v = denominator === 0 ? Infinity : (f * uSigned) / denominator;
+            const m = v / uSigned;
+
+            const objX = lensX + uSigned;
+            const objY = p.originY - p.h;
+            const imgX = lensX + v;
+            const imgY = p.originY - (p.h * m);
+
+            drawOpticalObject(objX, p.originY, objY, getComputedStyle(document.documentElement).getPropertyValue('--object-color').trim(), 'Object', p.isPointObject);
+
+            let isVirtual = v < 0;
+            let imageLabel = isVirtual ? 'Virtual Image (I)' : 'Real Image (I)';
+            if (Number.isFinite(imgX) && Number.isFinite(imgY)) {
+                drawOpticalObject(imgX, p.originY, imgY, getComputedStyle(document.documentElement).getPropertyValue('--image-color').trim(), imageLabel, p.isPointObject, isVirtual);
+            }
+
+            // Draw 2 Principal Rays for Lenses
+            drawLensRays(lensX, p.originY, objX, objY, f, v, imgX, imgY, isConvexType, isVirtual, subType);
+
+            caseTitle.textContent = `${subType.toUpperCase()} Lens Refraction`;
+            formulaDisplay.innerHTML = `<sup>1</sup>&frasl;<sub>f</sub> = <sup>1</sup>&frasl;<sub>v</sub> − <sup>1</sup>&frasl;<sub>u</sub> &nbsp;&nbsp;|&nbsp;&nbsp; m = <sup>v</sup>&frasl;<sub>u</sub>`;
+            
+            let lensDesc = isConvexType 
+                ? `Converging lens (n = ${p.n}). Bends parallel incident rays toward principal focus F₂. Forms real or virtual images depending on object distance.`
+                : `Diverging lens (n = ${p.n}). Spreads incoming parallel rays outward. Always produces upright, diminished virtual images on the same side as the object.`;
+
+            dynamicFormulas.innerHTML = `
+                <div class="stat-row"><span class="stat-label">Object Dist (u):</span><span class="stat-val">-${p.u} px</span></div>
+                <div class="stat-row"><span class="stat-label">Focal Length (f):</span><span class="stat-val">${Math.abs(f)} px</span></div>
+                <div class="stat-row"><span class="stat-label">Image Dist (v):</span><span class="stat-val">${Number.isFinite(v) ? `${Math.round(v)} px` : 'Infinity'}</span></div>
+                <div class="stat-row"><span class="stat-label">Magnification (m):</span><span class="stat-val">${m.toFixed(2)}</span></div>
+                <div class="stat-row"><span class="stat-label">Refractive Index (n):</span><span class="stat-val">${p.n}</span></div>
+            `;
+            explanationText.innerHTML = lensDesc;
+        }
+
+        function drawLensInfinityRays(lx, oy, subType, f, isConverging) {
+            const rayReal = getComputedStyle(document.documentElement).getPropertyValue('--ray-real').trim();
+            const rayVirtual = getComputedStyle(document.documentElement).getPropertyValue('--ray-virtual').trim();
+            const rightEdge = canvas.width - 20;
+
+            [-40, 40].forEach((offset) => {
+                const hitY = oy + offset;
+                const bounds = getLensBoundsAtY(subType, lx, oy, hitY);
+                drawRayLine(20, hitY, bounds.left, hitY, rayReal);
+                const exitBounds = getLensBoundsAtY(subType, lx, oy, hitY);
+                const focusX = lx + f;
+                const endY = hitY + (rightEdge - exitBounds.right) * (oy - hitY) / (focusX - exitBounds.right);
+                drawRayLine(bounds.left, hitY, exitBounds.right, hitY, rayReal);
+                drawRayLine(exitBounds.right, hitY, rightEdge, endY, rayReal);
+                if (!isConverging) {
+                    drawDashedRayLine(exitBounds.right, hitY, focusX, oy, rayVirtual);
+                }
+            });
+        }
+
+        function drawLensRays(lx, oy, ox, oy_obj, f, v, ix, iy, isConvex, isVirtual, subType) {
+            const rayReal = getComputedStyle(document.documentElement).getPropertyValue('--ray-real').trim();
+            const rayVirtual = getComputedStyle(document.documentElement).getPropertyValue('--ray-virtual').trim();
+            const rightEdge = canvas.width - 20;
+            const firstHit = getLensBoundsAtY(subType, lx, oy, oy_obj);
+            const firstExit = firstHit.right;
+            drawRayLine(ox, oy_obj, firstHit.left, oy_obj, rayReal);
+            const parallelEndY = oy_obj + (rightEdge - firstExit) * (iy - oy_obj) / (ix - firstExit);
+            drawRayLine(firstExit, oy_obj, rightEdge, parallelEndY, rayReal);
+            if (isVirtual) {
+                drawDashedRayLine(firstExit, oy_obj, ix, iy, rayVirtual);
+            }
+
+            const targetX = isConvex ? lx - Math.abs(f) : lx + Math.abs(f);
+            const incidentSlope = targetX === ox ? 0 : (oy - oy_obj) / (targetX - ox);
+            const rayYAtX = (x) => oy_obj + (x - ox) * incidentSlope;
+            const intersectionError = (x) => x - getLensBoundsAtY(subType, lx, oy, rayYAtX(x)).left;
+            let low = lx - 60;
+            let high = lx + 10;
+            if (intersectionError(low) * intersectionError(high) <= 0) {
+                for (let i = 0; i < 40; i += 1) {
+                    const mid = (low + high) / 2;
+                    if (intersectionError(low) * intersectionError(mid) <= 0) {
+                        high = mid;
+                    } else {
+                        low = mid;
+                    }
+                }
+            } else {
+                low = lx;
+            }
+            const hitX = low;
+            const hitY = rayYAtX(hitX);
+            const exitX = getLensBoundsAtY(subType, lx, oy, hitY).right;
+            drawRayLine(ox, oy_obj, hitX, hitY, rayReal);
+            drawRayLine(hitX, hitY, exitX, hitY, rayReal);
+            drawRayLine(exitX, hitY, rightEdge, hitY, rayReal);
+            if (isVirtual) {
+                drawDashedRayLine(exitX, hitY, ix, iy, rayVirtual);
+            }
+        }
+
+        function drawArrow(x1, y1, x2, y2, color, label, isDashed = false) {
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = 3;
+
+            if (isDashed) ctx.setLineDash([4, 4]);
+
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            const headLength = 10;
+            const sign = y2 < y1 ? 1 : -1;
+
+            ctx.beginPath();
+            ctx.moveTo(x2, y2);
+            ctx.lineTo(x2 - 6, y2 + sign * headLength);
+            ctx.lineTo(x2 + 6, y2 + sign * headLength);
+            ctx.closePath();
+            ctx.fill();
+
+            if (label) {
+                ctx.font = 'bold 12px Segoe UI';
+                ctx.fillStyle = color;
+                ctx.fillText(label, x2 - 25, y2 + (sign > 0 ? 22 : -10));
+            }
+        }
+
+        function drawOpticalObject(x, baseY, tipY, color, label, isPoint, isDashed = false) {
+            if (isPoint) {
+                drawPointObject(x, tipY, label, color);
+                return;
+            }
+            drawArrow(x, baseY, x, tipY, color, label, isDashed);
+        }
+
+        function drawPointObject(x, y, label, color = getComputedStyle(document.documentElement).getPropertyValue('--object-color').trim()) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, Math.PI * 2);
+            ctx.fill();
+            if (label) {
+                ctx.font = 'bold 12px Segoe UI';
+                ctx.fillText(label, x + 7, y - 7);
+            }
+        }
+
+        function drawRayLine(x1, y1, x2, y2, color) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.75;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+
+            const arrowX = x1 + (x2 - x1) * 0.58;
+            const arrowY = y1 + (y2 - y1) * 0.58;
+            const angle = Math.atan2(y2 - y1, x2 - x1);
+            const headLength = 8;
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(arrowX + Math.cos(angle) * headLength, arrowY + Math.sin(angle) * headLength);
+            ctx.lineTo(arrowX + Math.cos(angle + 2.5) * headLength, arrowY + Math.sin(angle + 2.5) * headLength);
+            ctx.lineTo(arrowX + Math.cos(angle - 2.5) * headLength, arrowY + Math.sin(angle - 2.5) * headLength);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawDashedRayLine(x1, y1, x2, y2, color) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function drawPointMarker(x, y, label) {
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim();
+            ctx.beginPath();
+            ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.font = '11px Segoe UI';
+            ctx.fillText(label, x - 6, y + 18);
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const params = getOpticsParams();
+            const objX = params.originX - params.u;
+
+            if (Math.abs(mouseX - objX) < 35) {
+                isDragging = true;
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const params = getOpticsParams();
+            
+            let newU = Math.round(params.originX - mouseX);
+            if (newU >= 60 && newU <= 320) {
+                objDistInput.value = newU;
+                updateSimulation();
+            }
+        });
+
+        window.addEventListener('mouseup', () => { isDragging = false; });
+
+        window.onload = () => { updateSimulation(); };
+    </script>
+</body>
+</html>
