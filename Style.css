@@ -125,7 +125,8 @@ body, html {
 }
 
 /* Navigation Buttons */
-.menu-btn {
+.chemistry-buttons,
+.physics-buttons {
   background-color: var(--btn-bg);
   color: var(--btn-text);
   border: none;
@@ -138,25 +139,29 @@ body, html {
   box-shadow: 0 4px 12px rgba(0, 188, 212, 0.2);
 }
 
-.menu-btn:hover {
+.chemistry-buttons:hover,
+.physics-buttons:hover {
   background-color: var(--btn-hover);
   transform: translateY(-3px);
   box-shadow: 0 6px 18px rgba(0, 188, 212, 0.4);
 }
 
-.menu-btn:active {
+.chemistry-buttons:active,
+.physics-buttons:active {
   transform: translateY(0);
 }
 
-.optics-btn {
-  display: block;
-  margin: 20px auto 0;
+.physics-button-group {
+  margin-top: 20px;
+}
+
+.physics-buttons {
   background-color: #f57c00;
-  color: #121212;
+  color: var(--btn-text);
   box-shadow: 0 4px 12px rgba(245, 124, 0, 0.2);
 }
 
-.optics-btn:hover {
+.physics-buttons:hover {
   background-color: #fb8c00;
   box-shadow: 0 6px 18px rgba(245, 124, 0, 0.4);
 }

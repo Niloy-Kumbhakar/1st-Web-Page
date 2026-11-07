@@ -765,13 +765,19 @@
             const rayVirtual = getComputedStyle(document.documentElement).getPropertyValue('--ray-virtual').trim();
             const leftEdge = 20;
             const surfaceXAt = (y) => mx + (isConcave ? -1 : 1) * ((y - oy) * (y - oy)) / (4 * Math.abs(f));
+            const isObjectAtFocus = isConcave && !Number.isFinite(v);
+            const firstHitX = surfaceXAt(oy_obj);
+            const focusX = mx + f;
+            const focusRaySlope = isObjectAtFocus ? (oy - oy_obj) / (focusX - firstHitX) : 0;
+
             [oy_obj, oy].forEach((hitY) => {
                 const hitX = surfaceXAt(hitY);
                 drawRayLine(ox, oy_obj, hitX, hitY, rayReal);
 
-                const outgoingY = Number.isFinite(v)
-                    ? hitY + (leftEdge - hitX) * (iy - hitY) / (ix - hitX)
-                    : hitY;
+                const outgoingSlope = isObjectAtFocus
+                    ? focusRaySlope
+                    : Number.isFinite(v) ? (iy - hitY) / (ix - hitX) : 0;
+                const outgoingY = hitY + (leftEdge - hitX) * outgoingSlope;
                 drawRayLine(hitX, hitY, leftEdge, outgoingY, rayReal);
                 if (isVirtual && Number.isFinite(ix) && Number.isFinite(iy)) {
                     drawDashedRayLine(hitX, hitY, ix, iy, rayVirtual);
